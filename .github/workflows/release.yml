@@ -93,92 +93,94 @@ jobs:
           $version = "${{ github.ref_name }}" -replace '^v', ''
           if (-not $version) { $version = "1.0.0" }
           
-          $nsisScript = @"
-          ; 万能工具箱 NSIS 安装脚本
-          ; 自动生成，请勿手动修改
+          # 使用数组避免 here-string 的缩进问题
+          $lines = @(
+            "; 万能工具箱 NSIS 安装脚本"
+            "; 自动生成，请勿手动修改"
+            ""
+            "!define APP_NAME `"${{ env.APP_NAME }}`""
+            "!define APP_VERSION `"$version`""
+            "!define APP_PUBLISHER `"MasterPick`""
+            "!define APP_URL `"https://github.com/MasterPick/universal-toolbox`""
+            "!define APP_EXE `"${{ env.APP_NAME }}.exe`""
+            "!define INSTALL_DIR `"`$PROGRAMFILES64\${{ env.APP_NAME }}`""
+            ""
+            "Name `"`${APP_NAME} v`${APP_VERSION}`""
+            "OutFile `"build\bin\${{ env.APP_NAME }}_Setup.exe`""
+            "Unicode True"
+            "InstallDir `"`${INSTALL_DIR}`""
+            "InstallDirRegKey HKLM `"Software\`${APP_NAME}`" `"`""
+            "RequestExecutionLevel admin"
+            "SetCompressor /SOLID lzma"
+            ""
+            "!include `"MUI2.nsh`""
+            ""
+            "!define MUI_ABORTWARNING"
+            "!define MUI_ICON `"`${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico`""
+            "!define MUI_UNICON `"`${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico`""
+            "!define MUI_WELCOMEFINISHPAGE_BITMAP `"`${NSISDIR}\Contrib\Graphics\Wizard\win.bmp`""
+            "!define MUI_HEADERIMAGE"
+            ""
+            "!insertmacro MUI_PAGE_WELCOME"
+            "!insertmacro MUI_PAGE_LICENSE `"LICENSE`""
+            "!insertmacro MUI_PAGE_DIRECTORY"
+            "!insertmacro MUI_PAGE_INSTFILES"
+            "!define MUI_FINISHPAGE_RUN `"`$INSTDIR\`${APP_EXE}`""
+            "!define MUI_FINISHPAGE_RUN_TEXT `"立即启动 `${APP_NAME}`""
+            "!insertmacro MUI_PAGE_FINISH"
+            ""
+            "!insertmacro MUI_UNPAGE_CONFIRM"
+            "!insertmacro MUI_UNPAGE_INSTFILES"
+            ""
+            "!insertmacro MUI_LANGUAGE `"SimpChinese`""
+            ""
+            "Section `"主程序`" SecMain"
+            "  SectionIn RO"
+            "  SetOutPath `"`$INSTDIR`""
+            "  File `"build\bin\`${APP_EXE}`""
+            "  File `"README.md`""
+            "  File `"LICENSE`""
+            ""
+            "  ; 创建桌面快捷方式"
+            "  CreateShortcut `"`$DESKTOP\`${APP_NAME}.lnk`" `"`$INSTDIR\`${APP_EXE}`""
+            ""
+            "  ; 创建开始菜单"
+            "  CreateDirectory `"`$SMPROGRAMS\`${APP_NAME}`""
+            "  CreateShortcut `"`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk`" `"`$INSTDIR\`${APP_EXE}`""
+            "  CreateShortcut `"`$SMPROGRAMS\`${APP_NAME}\卸载 `${APP_NAME}.lnk`" `"`$INSTDIR\Uninstall.exe`""
+            ""
+            "  ; 写入注册表"
+            "  WriteRegStr HKLM `"Software\`${APP_NAME}`" `"`" `"`$INSTDIR`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"DisplayName`" `"`${APP_NAME}`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"UninstallString`" `"`$INSTDIR\Uninstall.exe`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"DisplayVersion`" `"`${APP_VERSION}`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"Publisher`" `"`${APP_PUBLISHER}`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"URLInfoAbout`" `"`${APP_URL}`""
+            ""
+            "  ; 生成卸载程序"
+            "  WriteUninstaller `"`$INSTDIR\Uninstall.exe`""
+            "SectionEnd"
+            ""
+            "Section `"Uninstall`""
+            "  Delete `"`$INSTDIR\`${APP_EXE}`""
+            "  Delete `"`$INSTDIR\README.md`""
+            "  Delete `"`$INSTDIR\LICENSE`""
+            "  Delete `"`$INSTDIR\Uninstall.exe`""
+            "  RMDir `"`$INSTDIR`""
+            ""
+            "  Delete `"`$DESKTOP\`${APP_NAME}.lnk`""
+            "  Delete `"`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk`""
+            "  Delete `"`$SMPROGRAMS\`${APP_NAME}\卸载 `${APP_NAME}.lnk`""
+            "  RMDir `"`$SMPROGRAMS\`${APP_NAME}`""
+            ""
+            "  DeleteRegKey HKLM `"Software\`${APP_NAME}`""
+            "  DeleteRegKey HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`""
+            "SectionEnd"
+          )
           
-          !define APP_NAME "${{ env.APP_NAME }}"
-          !define APP_VERSION "$version"
-          !define APP_PUBLISHER "MasterPick"
-          !define APP_URL "https://github.com/MasterPick/universal-toolbox"
-          !define APP_EXE "${{ env.APP_NAME }}.exe"
-          !define INSTALL_DIR "`$PROGRAMFILES64\${{ env.APP_NAME }}"
-          
-          Name "`${APP_NAME} v`${APP_VERSION}"
-          OutFile "build\bin\${{ env.APP_NAME }}_Setup.exe"
-          Unicode True
-          InstallDir "`${INSTALL_DIR}"
-          InstallDirRegKey HKLM "Software\`${APP_NAME}" ""
-          RequestExecutionLevel admin
-          SetCompressor /SOLID lzma
-          
-          !include "MUI2.nsh"
-          
-          !define MUI_ABORTWARNING
-          !define MUI_ICON "`${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
-          !define MUI_UNICON "`${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
-          !define MUI_WELCOMEFINISHPAGE_BITMAP "`${NSISDIR}\Contrib\Graphics\Wizard\win.bmp"
-          !define MUI_HEADERIMAGE
-          
-          !insertmacro MUI_PAGE_WELCOME
-          !insertmacro MUI_PAGE_LICENSE "LICENSE"
-          !insertmacro MUI_PAGE_DIRECTORY
-          !insertmacro MUI_PAGE_INSTFILES
-          !define MUI_FINISHPAGE_RUN "`$INSTDIR\`${APP_EXE}"
-          !define MUI_FINISHPAGE_RUN_TEXT "立即启动 `${APP_NAME}"
-          !insertmacro MUI_PAGE_FINISH
-          
-          !insertmacro MUI_UNPAGE_CONFIRM
-          !insertmacro MUI_UNPAGE_INSTFILES
-          
-          !insertmacro MUI_LANGUAGE "SimpChinese"
-          
-          Section "主程序" SecMain
-            SectionIn RO
-            SetOutPath "`$INSTDIR"
-            File "build\bin\`${APP_EXE}"
-            File "README.md"
-            File "LICENSE"
-            
-            ; 创建桌面快捷方式
-            CreateShortcut "`$DESKTOP\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXE}"
-            
-            ; 创建开始菜单
-            CreateDirectory "`$SMPROGRAMS\`${APP_NAME}"
-            CreateShortcut "`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk" "`$INSTDIR\`${APP_EXE}"
-            CreateShortcut "`$SMPROGRAMS\`${APP_NAME}\卸载 `${APP_NAME}.lnk" "`$INSTDIR\Uninstall.exe"
-            
-            ; 写入注册表
-            WriteRegStr HKLM "Software\`${APP_NAME}" "" "`$INSTDIR"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "DisplayName" "`${APP_NAME}"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "UninstallString" "`$INSTDIR\Uninstall.exe"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "DisplayVersion" "`${APP_VERSION}"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "Publisher" "`${APP_PUBLISHER}"
-            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}" "URLInfoAbout" "`${APP_URL}"
-            
-            ; 生成卸载程序
-            WriteUninstaller "`$INSTDIR\Uninstall.exe"
-          SectionEnd
-          
-          Section "Uninstall"
-            Delete "`$INSTDIR\`${APP_EXE}"
-            Delete "`$INSTDIR\README.md"
-            Delete "`$INSTDIR\LICENSE"
-            Delete "`$INSTDIR\Uninstall.exe"
-            RMDir "`$INSTDIR"
-            
-            Delete "`$DESKTOP\`${APP_NAME}.lnk"
-            Delete "`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk"
-            Delete "`$SMPROGRAMS\`${APP_NAME}\卸载 `${APP_NAME}.lnk"
-            RMDir "`$SMPROGRAMS\`${APP_NAME}"
-            
-            DeleteRegKey HKLM "Software\`${APP_NAME}"
-            DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}"
-          SectionEnd
-          "@
-          
+          $nsisScript = $lines -join "`n"
           [System.IO.File]::WriteAllText("$PWD\installer.nsi", $nsisScript, [System.Text.UTF8Encoding]::new($false))
-          echo "NSIS 脚本生成完成"
+          Write-Host "NSIS 脚本生成完成，行数: $($lines.Count)"
 
       - name: 编译 NSIS 安装包
         shell: pwsh
