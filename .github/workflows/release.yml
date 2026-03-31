@@ -60,17 +60,17 @@ jobs:
       - name: 构建 Windows 单文件可执行程序
         shell: pwsh
         run: |
-          wails build -platform windows/amd64 -ldflags "-s" -o "${{ env.APP_NAME }}.exe"
+          # 使用英文文件名构建，避免 CI 环境 ACP 编码问题导致中文路径不可识别
+          wails build -platform windows/amd64 -ldflags "-s" -o "${{ env.APP_NAME_EN }}.exe"
           Write-Host "构建完成，build\bin 目录内容："
           Get-ChildItem -Path "build\bin" | Format-Table Name, Length -AutoSize
-          # 确认 exe 文件存在
-          $exe = Get-ChildItem -Path "build\bin" -Filter "*.exe" | Select-Object -First 1
-          if ($exe) {
-            Write-Host "找到可执行文件: $($exe.FullName)，大小: $($exe.Length) 字节"
-            # 将实际文件名写入 GITHUB_ENV 供后续步骤使用
-            echo "ACTUAL_EXE_NAME=$($exe.Name)" >> $env:GITHUB_ENV
+          $expected = "build\bin\${{ env.APP_NAME_EN }}.exe"
+          if (Test-Path $expected) {
+            $file = Get-Item $expected
+            Write-Host "构建成功: $($file.FullName)，大小: $($file.Length) 字节"
           } else {
-            Write-Error "未找到 .exe 文件！"
+            Write-Error "构建产物未找到: $expected"
+            Get-ChildItem -Path "build\bin" -Recurse -ErrorAction SilentlyContinue | Format-Table FullName -AutoSize
             exit 1
           }
 
@@ -93,60 +93,55 @@ jobs:
       - name: 生成 NSIS 安装脚本
         shell: pwsh
         run: |
-          # 从环境变量获取实际的 exe 文件名（由前一步骤设置）
-          $actualExeName = $env:ACTUAL_EXE_NAME
-          if (-not $actualExeName) {
-            Write-Error "ACTUAL_EXE_NAME 未设置，前一步骤可能失败了"
+          # 确认构建产物存在
+          $exeName = "${{ env.APP_NAME_EN }}.exe"
+          $exePath = "build\bin\$exeName"
+          if (-not (Test-Path $exePath)) {
+            Write-Error "Build output not found: $exePath"
+            Get-ChildItem -Path "build\bin" -Recurse -ErrorAction SilentlyContinue | Format-Table FullName -AutoSize
             exit 1
           }
-          Write-Host "使用实际 exe 文件名: $actualExeName"
-          
-          # 再次验证文件存在
-          if (-not (Test-Path "build\bin\$actualExeName")) {
-            Write-Error "Build output not found: build\bin\$actualExeName"
-            ls -Recurse build 2>/dev/null | head -20
-            exit 1
-          }
-          Write-Host "Build output verified: build\bin\$actualExeName"
+          $fileInfo = Get-Item $exePath
+          Write-Host "Build verified: $($fileInfo.FullName) ($($fileInfo.Length) bytes)"
           
           $version = "${{ github.ref_name }}" -replace '^v', ''
           if (-not $version) { $version = "1.0.0" }
           
-          # 使用数组避免 here-string 的缩进问题
-          # 注意：APP_EXE 定义为实际的 exe 文件名，不假设中文支持
+          # 使用英文文件名构建 NSIS 脚本，中文仅出现在 UI 展示层
+          # 完全避免 ACP 编码导致的中文路径匹配问题
           $lines = @(
-            "; 万能工具箱 NSIS 安装脚本"
-            "; 自动生成，请勿手动修改"
+            "; Universal Toolbox NSIS Install Script"
+            "; Auto-generated, do not edit manually"
             ""
-            "!define APP_NAME `"${{ env.APP_NAME }}`""
+            "!define APP_NAME `${{ env.APP_NAME }}"
             "!define APP_VERSION `"$version`""
             "!define APP_PUBLISHER `"MasterPick`""
             "!define APP_URL `"https://github.com/MasterPick/universal-toolbox`""
-            "!define APP_EXE `"$actualExeName`""
-            "!define INSTALL_DIR `"`$PROGRAMFILES64\${{ env.APP_NAME }}`""
+            "!define APP_EXE `"${{ env.APP_NAME_EN }}.exe`""
+            "!define INSTALL_DIR `"$PROGRAMFILES64\${{ env.APP_NAME }}"`"
             ""
-            "Name `"`${APP_NAME} v`${APP_VERSION}`""
-            "OutFile `"build\bin\${{ env.APP_NAME }}_Setup.exe`""
+            "Name `"${APP_NAME} v${APP_VERSION}`""
+            "OutFile `"build\bin\${{ env.APP_NAME_EN }}_Setup.exe`""
             "Unicode True"
-            "InstallDir `"`${INSTALL_DIR}`""
-            "InstallDirRegKey HKLM `"Software\`${APP_NAME}`" `"`""
+            "InstallDir `"${INSTALL_DIR}`""
+            "InstallDirRegKey HKLM `"Software\${APP_NAME}`" `"`""
             "RequestExecutionLevel admin"
             "SetCompressor /SOLID lzma"
             ""
             "!include `"MUI2.nsh`""
             ""
             "!define MUI_ABORTWARNING"
-            "!define MUI_ICON `"`${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico`""
-            "!define MUI_UNICON `"`${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico`""
-            "!define MUI_WELCOMEFINISHPAGE_BITMAP `"`${NSISDIR}\Contrib\Graphics\Wizard\win.bmp`""
+            "!define MUI_ICON `"${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico`""
+            "!define MUI_UNICON `"${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico`""
+            "!define MUI_WELCOMEFINISHPAGE_BITMAP `"${NSISDIR}\Contrib\Graphics\Wizard\win.bmp`""
             "!define MUI_HEADERIMAGE"
             ""
             "!insertmacro MUI_PAGE_WELCOME"
             "!insertmacro MUI_PAGE_LICENSE `"LICENSE`""
             "!insertmacro MUI_PAGE_DIRECTORY"
             "!insertmacro MUI_PAGE_INSTFILES"
-            "!define MUI_FINISHPAGE_RUN `"`$INSTDIR\`${APP_EXE}`""
-            "!define MUI_FINISHPAGE_RUN_TEXT `"立即启动 `${APP_NAME}`""
+            "!define MUI_FINISHPAGE_RUN `"$INSTDIR\${APP_EXE}`""
+            "!define MUI_FINISHPAGE_RUN_TEXT `"Run ${APP_NAME}`""
             "!insertmacro MUI_PAGE_FINISH"
             ""
             "!insertmacro MUI_UNPAGE_CONFIRM"
@@ -154,100 +149,70 @@ jobs:
             ""
             "!insertmacro MUI_LANGUAGE `"SimpChinese`""
             ""
-            "Section `"主程序`" SecMain"
+            "Section `"Main`" SecMain"
             "  SectionIn RO"
-            "  SetOutPath `"`$INSTDIR`""
-            "  File `"build\bin\`${APP_EXE}`""
+            "  SetOutPath `"$INSTDIR`""
+            "  File `"build\bin\${APP_EXE}`""
             "  File `"README.md`""
             "  File `"LICENSE`""
             ""
-            "  ; 创建桌面快捷方式"
-            "  CreateShortcut `"`$DESKTOP\`${APP_NAME}.lnk`" `"`$INSTDIR\`${APP_EXE}`""
+            "  ; Desktop shortcut"
+            "  CreateShortcut `"$DESKTOP\${APP_NAME}.lnk`" `"$INSTDIR\${APP_EXE}`""
             ""
-            "  ; 创建开始菜单"
-            "  CreateDirectory `"`$SMPROGRAMS\`${APP_NAME}`""
-            "  CreateShortcut `"`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk`" `"`$INSTDIR\`${APP_EXE}`""
-            "  CreateShortcut `"`$SMPROGRAMS\`${APP_NAME}\卸载 `${APP_NAME}.lnk`" `"`$INSTDIR\Uninstall.exe`""
+            "  ; Start menu"
+            "  CreateDirectory `"$SMPROGRAMS\${APP_NAME}`""
+            "  CreateShortcut `"$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk`" `"$INSTDIR\${APP_EXE}`""
+            "  CreateShortcut `"$SMPROGRAMS\${APP_NAME}\Uninstall.lnk`" `"$INSTDIR\Uninstall.exe`""
             ""
-            "  ; 写入注册表"
-            "  WriteRegStr HKLM `"Software\`${APP_NAME}`" `"`" `"`$INSTDIR`""
-            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"DisplayName`" `"`${APP_NAME}`""
-            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"UninstallString`" `"`$INSTDIR\Uninstall.exe`""
-            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"DisplayVersion`" `"`${APP_VERSION}`""
-            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"Publisher`" `"`${APP_PUBLISHER}`""
-            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`" `"URLInfoAbout`" `"`${APP_URL}`""
+            "  ; Registry"
+            "  WriteRegStr HKLM `"Software\${APP_NAME}`" `"`" `"$INSTDIR`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}`" `"DisplayName`" `"${APP_NAME}`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}`" `"UninstallString`" `"$INSTDIR\Uninstall.exe`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}`" `"DisplayVersion`" `"${APP_VERSION}`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}`" `"Publisher`" `"${APP_PUBLISHER}`""
+            "  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}`" `"URLInfoAbout`" `"${APP_URL}`""
             ""
-            "  ; 生成卸载程序"
-            "  WriteUninstaller `"`$INSTDIR\Uninstall.exe`""
+            "  ; Uninstaller"
+            "  WriteUninstaller `"$INSTDIR\Uninstall.exe`""
             "SectionEnd"
             ""
             "Section `"Uninstall`""
-            "  Delete `"`$INSTDIR\`${APP_EXE}`""
-            "  Delete `"`$INSTDIR\README.md`""
-            "  Delete `"`$INSTDIR\LICENSE`""
-            "  Delete `"`$INSTDIR\Uninstall.exe`""
-            "  RMDir `"`$INSTDIR`""
+            "  Delete `"$INSTDIR\${APP_EXE}`""
+            "  Delete `"$INSTDIR\README.md`""
+            "  Delete `"$INSTDIR\LICENSE`""
+            "  Delete `"$INSTDIR\Uninstall.exe`""
+            "  RMDir `"$INSTDIR`""
             ""
-            "  Delete `"`$DESKTOP\`${APP_NAME}.lnk`""
-            "  Delete `"`$SMPROGRAMS\`${APP_NAME}\`${APP_NAME}.lnk`""
-            "  Delete `"`$SMPROGRAMS\`${APP_NAME}\卸载 `${APP_NAME}.lnk`""
-            "  RMDir `"`$SMPROGRAMS\`${APP_NAME}`""
+            "  Delete `"$DESKTOP\${APP_NAME}.lnk`""
+            "  Delete `"$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk`""
+            "  Delete `"$SMPROGRAMS\${APP_NAME}\Uninstall.lnk`""
+            "  RMDir `"$SMPROGRAMS\${APP_NAME}`""
             ""
-            "  DeleteRegKey HKLM `"Software\`${APP_NAME}`""
-            "  DeleteRegKey HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\`${APP_NAME}`""
+            "  DeleteRegKey HKLM `"Software\${APP_NAME}`""
+            "  DeleteRegKey HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}`""
             "SectionEnd"
           )
           
-          $nsisScript = $lines -join "`n"
-          [System.IO.File]::WriteAllText("$PWD\installer.nsi", $nsisScript, [System.Text.UTF8Encoding]::new($false))
-          Write-Host "NSIS 脚本生成完成，行数: $($lines.Count)"
+          # 以 UTF-8 BOM 写入（NSIS Unicode 模式需要 BOM 来正确识别 UTF-8）
+          $nsisScript = $lines -join "`r`n"
+          $utf8Bom = New-Object System.Text.UTF8Encoding $true
+          [System.IO.File]::WriteAllText("$PWD\installer.nsi", $nsisScript, $utf8Bom)
+          Write-Host "NSIS script generated: $($lines.Count) lines, UTF-8 BOM"
           
-          # 验证脚本内容
-          Write-Host "`n===== installer.nsi 关键行 ====="
-          Get-Content "installer.nsi" | Select-String "!define APP_EXE" | ForEach-Object { Write-Host $_ }
-          Get-Content "installer.nsi" | Select-String "File `"build" | ForEach-Object { Write-Host $_ }
+          # 验证关键行
+          Write-Host "`n===== Key NSIS lines ====="
+          Get-Content "installer.nsi" | Select-String "APP_EXE|File |Unicode" | ForEach-Object { Write-Host $_.Line.Trim() }
 
       - name: 编译 NSIS 安装包
         shell: pwsh
         run: |
-          # 调试：确认当前目录和文件状态
-          Write-Host "当前工作目录: $PWD"
-          Write-Host ""
-          Write-Host "===== build\bin 目录内容 ====="
-          Get-ChildItem -Path "build\bin" -Recurse | Format-Table Name, Length, FullName -AutoSize
-          Write-Host ""
-
-          # 确认 NSIS 脚本存在并显示关键行
-          if (-not (Test-Path "installer.nsi")) {
-            Write-Error "installer.nsi 不存在！"
-            exit 1
-          }
-          Write-Host "===== installer.nsi 关键行（File 指令）====="
-          Get-Content "installer.nsi" | Select-String "File " | ForEach-Object { Write-Host $_ }
-          Write-Host ""
-
-          # 确认 exe 文件存在
-          $expectedExe = "build\bin\${{ env.APP_NAME }}.exe"
-          Write-Host "期望的 exe 路径: $expectedExe"
-          if (Test-Path $expectedExe) {
-            $fileInfo = Get-Item $expectedExe
-            Write-Host "文件存在！大小: $($fileInfo.Length) 字节"
-          } else {
-            Write-Error "文件不存在: $expectedExe"
-            exit 1
-          }
-
-          # 尝试多个可能的 NSIS 安装路径
           $makensis = $null
-          @(
-            "C:\Program Files (x86)\NSIS\makensis.exe",
-            "C:\Program Files\NSIS\makensis.exe"
-          ) | ForEach-Object {
+          @("C:\Program Files (x86)\NSIS\makensis.exe", "C:\Program Files\NSIS\makensis.exe") | ForEach-Object {
             if (Test-Path $_) { $makensis = $_ }
           }
           
           if (-not $makensis) {
-            Write-Error "makensis.exe not found!"
+            Write-Error "makensis.exe not found"
             exit 1
           }
           
@@ -257,25 +222,25 @@ jobs:
             Write-Error "NSIS compilation failed with exit code $LASTEXITCODE"
             exit 1
           }
-          echo "安装包编译完成"
-          dir build\bin
+          Write-Host "NSIS compilation complete"
+          Get-ChildItem -Path "build\bin" | Format-Table Name, Length -AutoSize
 
       - name: 计算文件哈希值
         shell: pwsh
         run: |
-          $exeHash = (Get-FileHash "build\bin\${{ env.APP_NAME }}.exe" -Algorithm SHA256).Hash
-          $setupHash = (Get-FileHash "build\bin\${{ env.APP_NAME }}_Setup.exe" -Algorithm SHA256).Hash
-          Write-Host "单文件 SHA256: $exeHash"
-          Write-Host "安装包 SHA256: $setupHash"
-          "$exeHash  ${{ env.APP_NAME }}.exe`n$setupHash  ${{ env.APP_NAME }}_Setup.exe" | Out-File "build\bin\windows_checksums.txt"
+          $exeHash = (Get-FileHash "build\bin\${{ env.APP_NAME_EN }}.exe" -Algorithm SHA256).Hash
+          $setupHash = (Get-FileHash "build\bin\${{ env.APP_NAME_EN }}_Setup.exe" -Algorithm SHA256).Hash
+          Write-Host "exe SHA256: $exeHash"
+          Write-Host "Setup SHA256: $setupHash"
+          "$exeHash  ${{ env.APP_NAME_EN }}.exe`n$setupHash  ${{ env.APP_NAME_EN }}_Setup.exe" | Out-File "build\bin\windows_checksums.txt" -Encoding UTF8
 
       - name: 上传 Windows 构建产物
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: |
-            build/bin/${{ env.APP_NAME }}.exe
-            build/bin/${{ env.APP_NAME }}_Setup.exe
+            build/bin/${{ env.APP_NAME_EN }}.exe
+            build/bin/${{ env.APP_NAME_EN }}_Setup.exe
             build/bin/windows_checksums.txt
           retention-days: 7
 
@@ -600,8 +565,8 @@ jobs:
             
             | 平台 | 文件 | 说明 |
             |------|------|------|
-            | 🪟 Windows 安装包 | `万能工具箱_Setup.exe` | **推荐**，含安装向导、桌面快捷方式 |
-            | 🪟 Windows 单文件 | `万能工具箱.exe` | 免安装，双击即运行 |
+            | 🪟 Windows 安装包 | `universal-toolbox_Setup.exe` | **推荐**，含安装向导、桌面快捷方式 |
+            | 🪟 Windows 单文件 | `universal-toolbox.exe` | 免安装，双击即运行 |
             | 🐧 Linux DEB 包 | `universal-toolbox_*_amd64.deb` | Ubuntu/Debian 系（推荐） |
             | 🐧 Linux 压缩包 | `universal-toolbox_linux_amd64.tar.gz` | 通用 Linux，解压即用 |
             | 🍎 macOS Intel | `universal-toolbox_macos_amd64.dmg` | Intel 芯片 Mac |
