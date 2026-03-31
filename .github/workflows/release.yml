@@ -74,13 +74,10 @@ jobs:
             exit 1
           }
 
-      - name: 安装 NSIS（制作安装包）
+      - name: 验证 NSIS 安装
         shell: pwsh
         run: |
-          choco install nsis -y --no-progress
-          # 刷新 PATH
-          $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-          # 验证 NSIS 安装
+          # GitHub Actions Windows runner 已预装 NSIS，直接验证即可
           @("C:\Program Files (x86)\NSIS\makensis.exe", "C:\Program Files\NSIS\makensis.exe") | ForEach-Object {
             if (Test-Path $_) {
               Write-Host "NSIS found at: $_"
@@ -88,7 +85,7 @@ jobs:
               Write-Host "NSIS version: $ver"
             }
           }
-          echo "NSIS 安装完成"
+          echo "NSIS 验证完成"
 
       - name: 生成 NSIS 安装脚本
         shell: pwsh
