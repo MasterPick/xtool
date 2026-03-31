@@ -107,20 +107,24 @@ jobs:
           $version = "${{ github.ref_name }}" -replace '^v', ''
           if (-not $version) { $version = "1.0.0" }
 
+          # 设置 NSIS 变量
+          $appName = "${{ env.APP_NAME }}"
+          $appNameEn = "${{ env.APP_NAME_EN }}"
+
           # 使用 here-string 生成 NSIS 脚本，避免复杂的引号转义
           $nsisScript = @"
 ; Universal Toolbox NSIS Install Script
 ; Auto-generated, do not edit manually
 
-!define APP_NAME '${{ env.APP_NAME }}'
+!define APP_NAME '$appName'
 !define APP_VERSION '$version'
 !define APP_PUBLISHER 'MasterPick'
 !define APP_URL 'https://github.com/MasterPick/universal-toolbox'
-!define APP_EXE '${{ env.APP_NAME_EN }}.exe'
-!define INSTALL_DIR '$PROGRAMFILES64\${{ env.APP_NAME }}'
+!define APP_EXE '$appNameEn.exe'
+!define INSTALL_DIR '$PROGRAMFILES64\$appName'
 
 Name '${APP_NAME} v${APP_VERSION}'
-OutFile 'build\bin\${{ env.APP_NAME_EN }}_Setup.exe'
+OutFile 'build\bin\$appNameEn_Setup.exe'
 Unicode True
 InstallDir '${INSTALL_DIR}'
 InstallDirRegKey HKLM 'Software\${APP_NAME}' ''
