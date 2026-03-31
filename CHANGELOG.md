@@ -4,6 +4,27 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)
 
+## [1.1.0] - 2026-03-31
+
+### 新增
+- 🚀 **多平台安装包支持**
+  - Windows：`.exe` 单文件 + NSIS 安装向导（含桌面快捷方式、控制面板卸载）
+  - Linux：`.deb` 安装包（含应用菜单图标）+ `tar.gz` 通用压缩包
+  - macOS：Intel `.dmg` + Apple Silicon (M1/M2/M3) `.dmg` 双架构
+- ⚡ **GitHub Actions CI/CD 升级**
+  - 三平台并行构建，互不依赖
+  - 自动生成 SHA256 校验和文件
+  - Release 页面展示详细安装说明
+- 📦 **Makefile 本地构建支持**
+  - `make dev` 启动热重载开发模式
+  - `make build-linux` 生成 .deb + tar.gz
+  - `make build-macos` 生成双架构 .dmg
+- 📋 **平台构建文档**：各平台详细构建说明
+
+### 优化
+- GitHub Release 页面美化，含功能展开列表
+- 构建产物 SHA256 校验和汇总到单文件
+
 ## [1.0.0] - 2026-03-31
 
 ### 新增
