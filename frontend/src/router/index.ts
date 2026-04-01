@@ -114,6 +114,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/sysinfo/ColorPicker.vue'),
     meta: { title: '取色器', category: 'sysinfo', icon: 'Pipette' },
   },
+  {
+    path: '/sysinfo/imagetool',
+    name: 'ImageTool',
+    component: () => import('@/views/sysinfo/ImageTool.vue'),
+    meta: { title: '图片工具', category: 'sysinfo', icon: 'Image' },
+  },
 
   // ============ 日常工具 ============
   {
