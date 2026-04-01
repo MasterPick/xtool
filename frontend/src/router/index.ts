@@ -82,6 +82,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/devtools/SnippetsTool.vue'),
     meta: { title: '代码片段', category: 'devtools', icon: 'BookMarked' },
   },
+  {
+    path: '/devtools/crypto',
+    name: 'CryptoTool',
+    component: () => import('@/views/devtools/CryptoTool.vue'),
+    meta: { title: '加密解密', category: 'devtools', icon: 'Shield' },
+  },
 
   // ============ 系统工具 ============
   {

@@ -65,7 +65,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import {
   Search, Settings, PanelLeftClose, PanelLeftOpen,
   Braces, Code2, Binary, Link, Hash, FileText, QrCode,
-  Fingerprint, Clock, Regex, BookMarked,
+  Fingerprint, Clock, Regex, BookMarked, Shield,
   Cpu, Network, Monitor, FilePen, Pipette, Image,
   Calculator, ArrowLeftRight, StickyNote,
   Signal, Radar, Globe, Server,
@@ -84,7 +84,7 @@ const isActive = (path: string) => route.path.startsWith(path)
 // 图标映射表
 const iconMap: Record<string, any> = {
   Braces, Code2, Binary, Link, Hash, FileText, QrCode,
-  Fingerprint, Clock, Regex, BookMarked,
+  Fingerprint, Clock, Regex, BookMarked, Shield,
   Cpu, Network, Monitor, FilePen, Pipette, Image,
   Calculator, ArrowLeftRight, StickyNote,
   Signal, Radar, Globe, Server,
@@ -102,6 +102,7 @@ const navGroups = [
       { path: '/devtools/base64',    label: 'Base64',      icon: 'Binary' },
       { path: '/devtools/url',       label: 'URL 编解码',  icon: 'Link' },
       { path: '/devtools/hash',      label: '哈希计算',    icon: 'Hash' },
+      { path: '/devtools/crypto',    label: '加密解密',    icon: 'Shield' },
       { path: '/devtools/text',      label: '文本工具',    icon: 'FileText' },
       { path: '/devtools/qrcode',    label: '二维码',      icon: 'QrCode' },
       { path: '/devtools/uuid',      label: 'UUID 生成',   icon: 'Fingerprint' },
