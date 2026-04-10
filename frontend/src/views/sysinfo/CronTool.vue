@@ -152,7 +152,8 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 async function loadJobs() {
   loading.value = true
   try {
-    jobs.value = (await GetCronJobs() as any[]) || []
+    const res = await GetCronJobs() as any
+    jobs.value = res?.data || []
   } catch (e) {
     appStore.showToast('error', '加载任务列表失败: ' + String(e))
   } finally {
@@ -167,12 +168,12 @@ async function addJob() {
   }
   adding.value = true
   try {
-    await AddCronJob({
-      name: newJob.name.trim(),
-      expression: newJob.expression.trim(),
-      command: newJob.command.trim(),
-      description: newJob.description.trim(),
-    })
+    await AddCronJob(
+      newJob.name.trim(),
+      newJob.expression.trim(),
+      newJob.command.trim(),
+      newJob.description.trim()
+    )
     appStore.showToast('success', '任务添加成功')
     showAddModal.value = false
     // 重置表单
@@ -211,7 +212,7 @@ async function doDelete() {
 
 async function toggleJob(job: any) {
   try {
-    await ToggleCronJob(job.id)
+    await ToggleCronJob(job.id, !job.enabled)
     appStore.showToast('success', `任务 "${job.name}" 已${job.enabled ? '禁用' : '启用'}`)
     loadJobs()
   } catch (e) {
