@@ -10,6 +10,7 @@
         {{ scanning ? `扫描中 ${progress}%...` : '开始扫描' }}
       </button>
     </div>
+    <div v-if="scanError" class="card border-red-500/30 text-red-400 mb-3">{{ scanError }}</div>
     <div v-if="results.length" class="flex-1 overflow-auto">
       <div class="text-xs opacity-50 mb-2">发现 {{ results.length }} 台在线设备</div>
       <div class="grid grid-cols-4 gap-2">
@@ -27,17 +28,29 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Radar } from 'lucide-vue-next'
+import { useAppStore } from '@/stores/app'
 import { ScanLAN, GetLocalSubnet } from '../../../wailsjs/go/network/NetworkTools'
+const appStore = useAppStore()
 const subnet = ref('192.168.1'), scanning = ref(false), progress = ref(0)
 const results = ref<any[]>([])
+const scanError = ref('')
 async function scan() {
-  scanning.value = true; results.value = []; progress.value = 0
+  scanning.value = true; results.value = []; scanError.value = ''; progress.value = 0
   const timer = setInterval(() => { if (progress.value < 90) progress.value += 5 }, 500)
   try {
     results.value = (await ScanLAN(subnet.value) as any[]).sort((a,b)=>a.latency-b.latency)
+  } catch (e) {
+    scanError.value = '扫描失败: ' + String(e)
+    appStore.showToast('error', '扫描失败: ' + String(e))
   } finally {
     clearInterval(timer); progress.value = 100; scanning.value = false
   }
 }
-onMounted(async () => { subnet.value = await GetLocalSubnet() as string })
+onMounted(async () => {
+  try {
+    subnet.value = await GetLocalSubnet() as string
+  } catch {
+    subnet.value = '192.168.1'
+  }
+})
 </script>

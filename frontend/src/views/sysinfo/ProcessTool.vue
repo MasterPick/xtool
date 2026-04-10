@@ -4,6 +4,15 @@
     <div class="page-desc">查看并管理系统运行中的进程</div>
     <div class="flex gap-2 mb-4">
       <input v-model="filter" class="input-field flex-1" placeholder="按进程名过滤..."/>
+      <select v-model="sortField" class="input-field w-28">
+        <option value="cpu">按 CPU</option>
+        <option value="memory">按内存</option>
+        <option value="pid">按 PID</option>
+        <option value="name">按名称</option>
+      </select>
+      <button @click="toggleSortOrder" class="btn btn-secondary" :title="sortAsc ? '升序' : '降序'">
+        <ArrowUpDown :size="14"/>
+      </button>
       <button @click="loadProcs" class="btn btn-primary" :disabled="loading">
         <RefreshCw :size="14" :class="loading?'loading-spin':''"/>刷新
       </button>
@@ -30,7 +39,7 @@
             </td>
             <td class="py-1.5 pr-4 opacity-70">{{ p.memory.toFixed(1) }}%</td>
             <td class="py-1.5">
-              <button @click="killProc(p.pid)" class="btn btn-danger py-0.5 px-2 text-xs">
+              <button @click="confirmKill(p)" class="btn btn-danger py-0.5 px-2 text-xs">
                 <X :size="10"/>结束
               </button>
             </td>
@@ -38,27 +47,94 @@
         </tbody>
       </table>
     </div>
+
+    <!-- 结束进程确认弹窗 -->
+    <div v-if="killConfirm" class="modal-overlay" @click.self="killConfirm=null">
+      <div class="modal-box card w-[400px]">
+        <div class="font-semibold mb-3 text-red-400">确认结束进程</div>
+        <div class="text-sm mb-4">
+          确定要结束进程 <span class="font-mono text-primary-400">{{ killConfirm.name }}</span>
+          (PID: <span class="font-mono">{{ killConfirm.pid }}</span>) 吗？
+          <div class="mt-2 text-xs opacity-50">此操作不可撤销，可能导致数据丢失。</div>
+        </div>
+        <div class="flex gap-2 justify-end">
+          <button @click="killConfirm=null" class="btn btn-secondary">取消</button>
+          <button @click="doKill" class="btn btn-danger">确认结束</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Cpu, RefreshCw, X } from 'lucide-vue-next'
+import { Cpu, RefreshCw, X, ArrowUpDown } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { GetProcessList, KillProcess } from '../../../wailsjs/go/sysinfo/SysInfo'
 const appStore = useAppStore()
 const procs = ref<any[]>([]), filter = ref(''), loading = ref(false)
-const filteredProcs = computed(() => filter.value
-  ? procs.value.filter(p => p.name.toLowerCase().includes(filter.value.toLowerCase()))
-  : procs.value.slice(0, 200)
-)
+const sortField = ref('cpu')
+const sortAsc = ref(false)
+const killConfirm = ref<any>(null)
+
+const filteredProcs = computed(() => {
+  let list = filter.value
+    ? procs.value.filter(p => p.name.toLowerCase().includes(filter.value.toLowerCase()))
+    : procs.value.slice(0, 500)
+
+  // 排序
+  list = [...list].sort((a, b) => {
+    let va: any, vb: any
+    switch (sortField.value) {
+      case 'cpu': va = a.cpu; vb = b.cpu; break
+      case 'memory': va = a.memory; vb = b.memory; break
+      case 'pid': va = a.pid; vb = b.pid; break
+      case 'name': va = a.name; vb = b.name; break
+      default: va = a.cpu; vb = b.cpu
+    }
+    if (typeof va === 'string') {
+      return sortAsc.value ? va.localeCompare(vb) : vb.localeCompare(va)
+    }
+    return sortAsc.value ? va - vb : vb - va
+  })
+
+  return list
+})
+
+function toggleSortOrder() {
+  sortAsc.value = !sortAsc.value
+}
+
 async function loadProcs() {
   loading.value = true
-  try { procs.value = (await GetProcessList() as any[] || []).sort((a,b)=>b.cpu-a.cpu) }
-  finally { loading.value = false }
+  try {
+    procs.value = (await GetProcessList() as any[] || []).sort((a: any, b: any) => b.cpu - a.cpu)
+  } catch (e) {
+    appStore.showToast('error', '加载进程列表失败: ' + String(e))
+  } finally {
+    loading.value = false
+  }
 }
-async function killProc(pid: number) {
-  try { await KillProcess(pid); appStore.showToast('success', `进程 ${pid} 已终止`); loadProcs() }
-  catch(e) { appStore.showToast('error', String(e)) }
+
+function confirmKill(p: any) {
+  killConfirm.value = p
 }
+
+async function doKill() {
+  if (!killConfirm.value) return
+  const pid = killConfirm.value.pid
+  const name = killConfirm.value.name
+  killConfirm.value = null
+  try {
+    await KillProcess(pid)
+    appStore.showToast('success', `进程 ${name} (${pid}) 已终止`)
+    loadProcs()
+  } catch (e) {
+    appStore.showToast('error', `终止进程失败: ${e}`)
+  }
+}
+
 onMounted(loadProcs)
 </script>
+<style scoped>
+.modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100; }
+</style>

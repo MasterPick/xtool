@@ -92,71 +92,123 @@ async function autoValidate() {
   try {
     JSON.parse(inputText.value)
     resultStatus.value = 'success'
-    resultLabel.value = '✓ 合法 JSON'
+    resultLabel.value = '合法 JSON'
   } catch {
     resultStatus.value = 'error'
-    resultLabel.value = '✗ 格式错误'
+    resultLabel.value = '格式错误'
   }
 }
 
 async function formatJSON() {
   if (!inputText.value.trim()) return
-  const res = await FormatJSON(inputText.value)
-  if (res.success) {
-    outputText.value = res.data
-    resultStatus.value = 'success'
-    resultLabel.value = '格式化成功'
-    appStore.showToast('success', 'JSON 格式化完成')
-  } else {
-    outputText.value = res.error
+  try {
+    const res = await FormatJSON(inputText.value)
+    if (res.success) {
+      outputText.value = res.data
+      resultStatus.value = 'success'
+      resultLabel.value = '格式化成功'
+      appStore.showToast('success', 'JSON 格式化完成')
+    } else {
+      outputText.value = res.error
+      resultStatus.value = 'error'
+      resultLabel.value = '格式化失败'
+    }
+  } catch (e) {
+    outputText.value = '格式化异常: ' + String(e)
     resultStatus.value = 'error'
-    resultLabel.value = '格式化失败'
+    resultLabel.value = '格式化异常'
+    appStore.showToast('error', '格式化异常: ' + String(e))
   }
 }
 
 async function compressJSON() {
   if (!inputText.value.trim()) return
-  const res = await CompressJSON(inputText.value)
-  if (res.success) {
-    outputText.value = res.data
-    resultStatus.value = 'success'
-    resultLabel.value = '压缩成功'
-  } else {
-    outputText.value = res.error
+  try {
+    const res = await CompressJSON(inputText.value)
+    if (res.success) {
+      outputText.value = res.data
+      resultStatus.value = 'success'
+      resultLabel.value = '压缩成功'
+    } else {
+      outputText.value = res.error
+      resultStatus.value = 'error'
+      resultLabel.value = '压缩失败'
+    }
+  } catch (e) {
+    outputText.value = '压缩异常: ' + String(e)
     resultStatus.value = 'error'
-    resultLabel.value = '压缩失败'
+    resultLabel.value = '压缩异常'
+    appStore.showToast('error', '压缩异常: ' + String(e))
   }
 }
 
 async function validateJSON() {
   if (!inputText.value.trim()) return
-  const res = await ValidateJSON(inputText.value)
-  outputText.value = res.data || res.error
-  resultStatus.value = res.success ? 'success' : 'error'
-  resultLabel.value = res.success ? '✓ 合法' : '✗ 不合法'
-  appStore.showToast(res.success ? 'success' : 'error', res.success ? 'JSON 格式正确' : res.error)
+  try {
+    const res = await ValidateJSON(inputText.value)
+    outputText.value = res.data || res.error
+    resultStatus.value = res.success ? 'success' : 'error'
+    resultLabel.value = res.success ? '合法' : '不合法'
+    appStore.showToast(res.success ? 'success' : 'error', res.success ? 'JSON 格式正确' : res.error)
+  } catch (e) {
+    outputText.value = '校验异常: ' + String(e)
+    resultStatus.value = 'error'
+    resultLabel.value = '校验异常'
+    appStore.showToast('error', '校验异常: ' + String(e))
+  }
 }
 
 async function escapeJSON() {
   if (!inputText.value.trim()) return
-  const res = await EscapeJSON(inputText.value)
-  if (res.success) outputText.value = res.data
+  try {
+    const res = await EscapeJSON(inputText.value)
+    if (res.success) {
+      outputText.value = res.data
+      resultStatus.value = 'success'
+      resultLabel.value = '转义成功'
+    } else {
+      outputText.value = res.error
+      resultStatus.value = 'error'
+      resultLabel.value = '转义失败'
+      appStore.showToast('error', res.error || '转义失败')
+    }
+  } catch (e) {
+    outputText.value = '转义异常: ' + String(e)
+    resultStatus.value = 'error'
+    resultLabel.value = '转义异常'
+    appStore.showToast('error', '转义异常: ' + String(e))
+  }
 }
 
 async function unescapeJSON() {
   if (!inputText.value.trim()) return
-  const res = await UnescapeJSON(inputText.value)
-  if (res.success) outputText.value = res.data
-  else {
-    outputText.value = res.error
+  try {
+    const res = await UnescapeJSON(inputText.value)
+    if (res.success) {
+      outputText.value = res.data
+      resultStatus.value = 'success'
+      resultLabel.value = '反转义成功'
+    } else {
+      outputText.value = res.error
+      resultStatus.value = 'error'
+      resultLabel.value = '反转义失败'
+    }
+  } catch (e) {
+    outputText.value = '反转义异常: ' + String(e)
     resultStatus.value = 'error'
+    resultLabel.value = '反转义异常'
+    appStore.showToast('error', '反转义异常: ' + String(e))
   }
 }
 
 async function copyOutput() {
   if (!outputText.value) return
-  await navigator.clipboard.writeText(outputText.value)
-  appStore.showToast('success', '已复制到剪贴板')
+  try {
+    await navigator.clipboard.writeText(outputText.value)
+    appStore.showToast('success', '已复制到剪贴板')
+  } catch {
+    appStore.showToast('error', '复制失败')
+  }
 }
 
 function clearAll() {

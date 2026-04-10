@@ -128,10 +128,21 @@
         <span class="text-green-400">找到 {{ matchCount }} 处匹配</span>
       </div>
 
-      <!-- 高亮预览 -->
+      <!-- 原文输入 -->
       <div class="flex-1 flex flex-col min-h-0">
         <div class="label mb-1">原文</div>
-        <div class="code-output flex-1 min-h-[200px] whitespace-pre-wrap">
+        <textarea
+          v-model="replaceInput"
+          class="textarea-field flex-1 min-h-[200px]"
+          placeholder="输入或粘贴要查找替换的文本..."
+          spellcheck="false"
+        />
+      </div>
+
+      <!-- 高亮预览 -->
+      <div v-if="replaceInput" class="flex-1 flex flex-col min-h-0 mt-3">
+        <div class="label mb-1">高亮预览</div>
+        <div class="code-output flex-1 min-h-[100px] whitespace-pre-wrap">
           <span v-for="(part, idx) in highlightedText" :key="idx" :class="part.highlight ? 'bg-yellow-500/30 text-yellow-300' : ''">{{ part.text }}</span>
         </div>
       </div>

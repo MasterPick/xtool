@@ -14,59 +14,193 @@
         <button v-for="b in sciButtons" :key="b" @click="pressSci(b)" class="calc-btn calc-btn-fn">{{ b }}</button>
       </template>
       <button @click="clear"           class="calc-btn calc-btn-clear col-span-2">AC</button>
-      <button @click="press('%')"      class="calc-btn calc-btn-fn">%</button>
-      <button @click="press('/')"      class="calc-btn calc-btn-op">÷</button>
+      <button @click="backspace"       class="calc-btn calc-btn-fn">DEL</button>
+      <button @click="press('/')"      class="calc-btn calc-btn-op">/</button>
       <button v-for="n in [7,8,9]"  :key="n" @click="press(String(n))" class="calc-btn">{{ n }}</button>
-      <button @click="press('*')"      class="calc-btn calc-btn-op">×</button>
+      <button @click="press('*')"      class="calc-btn calc-btn-op">x</button>
       <button v-for="n in [4,5,6]"  :key="n" @click="press(String(n))" class="calc-btn">{{ n }}</button>
-      <button @click="press('-')"      class="calc-btn calc-btn-op">−</button>
+      <button @click="press('-')"      class="calc-btn calc-btn-op">-</button>
       <button v-for="n in [1,2,3]"  :key="n" @click="press(String(n))" class="calc-btn">{{ n }}</button>
       <button @click="press('+')"      class="calc-btn calc-btn-op">+</button>
       <button @click="press('0')"      class="calc-btn col-span-2">0</button>
       <button @click="press('.')"      class="calc-btn">.</button>
-      <button @click="calculate"       class="calc-btn calc-btn-eq">=</button>
+      <button @click="calculate()"       class="calc-btn calc-btn-eq">=</button>
+    </div>
+
+    <!-- 计算历史 -->
+    <div v-if="history.length" class="mt-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm opacity-60">计算历史</div>
+        <button @click="history=[]" class="text-xs opacity-50 hover:opacity-100">清空</button>
+      </div>
+      <div class="space-y-1 max-h-40 overflow-auto">
+        <div v-for="(h,i) in history" :key="i" class="flex justify-between text-xs opacity-50 hover:opacity-80 cursor-pointer" @click="useHistory(h)">
+          <span class="font-mono">{{ h.expr }}</span>
+          <span class="font-mono text-primary-400">= {{ h.result }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Calculator } from 'lucide-vue-next'
+import { CalcBasic, CalcScientific } from '../../../wailsjs/go/daily/DailyTools'
+
 const mode = ref<'standard'|'scientific'>('standard')
 const display = ref('0'), expression = ref(''), current = ref('')
-const sciButtons = ['sin','cos','tan','√','x²','ln','log','π']
+const history = ref<Array<{expr:string, result:string}>>([])
+const sciButtons = ['sin','cos','tan','sqrt','x^2','ln','log','pi']
+
+// 运算符映射
+const opMap: Record<string, string> = {
+  '+': '+', '-': '-', '*': '*', '/': '/'
+}
 
 function press(val: string) {
   if (['+','-','*','/','%'].includes(val)) {
-    expression.value = display.value + ' ' + val
+    // 如果当前有表达式且有值，先计算之前的
+    if (current.value && expression.value) {
+      calculate(true)
+    }
+    expression.value = display.value + ' ' + val + ' '
     current.value = ''
   } else {
-    current.value += val
+    if (current.value === '0' && val !== '.') {
+      current.value = val
+    } else {
+      current.value += val
+    }
     display.value = current.value
   }
 }
 
-function calculate() {
+async function calculate(chained: boolean = false) {
   try {
-    const expr = expression.value + ' ' + display.value
-    // 简单四则运算（前端直接计算）
-    const result = Function('"use strict"; return (' + expr.replace('÷','/').replace('×','*') + ')')()
-    display.value = String(parseFloat(result.toFixed(10)))
-    expression.value = expr + ' ='
-    current.value = display.value
-  } catch { display.value = '错误' }
+    const leftStr = expression.value.replace(/[+\-*/]\s*$/, '').trim()
+    const rightStr = display.value
+    const op = expression.value.match(/([+\-*/])\s*$/)?.[1]
+
+    if (!leftStr || !rightStr) return
+
+    const a = parseFloat(leftStr)
+    const b = parseFloat(rightStr)
+
+    if (isNaN(a) || isNaN(b)) {
+      display.value = 'Error'
+      return
+    }
+
+    const exprStr = `${leftStr} ${op} ${rightStr}`
+
+    let result: number
+    if (op === '%') {
+      result = a % b
+    } else {
+      result = await CalcBasic(a, b, opMap[op || '+'] || '+')
+    }
+
+    const resultStr = String(parseFloat(result.toFixed(10)))
+    display.value = resultStr
+
+    if (!chained) {
+      expression.value = exprStr + ' ='
+      history.value.unshift({ expr: exprStr, result: resultStr })
+      if (history.value.length > 50) history.value.pop()
+    } else {
+      expression.value = resultStr + ' '
+    }
+    current.value = resultStr
+  } catch {
+    display.value = 'Error'
+  }
 }
 
 function pressSci(fn: string) {
   const v = parseFloat(display.value)
-  const map: Record<string,number> = {
-    'sin': Math.sin(v*Math.PI/180), 'cos': Math.cos(v*Math.PI/180),
-    'tan': Math.tan(v*Math.PI/180), '√': Math.sqrt(v),
-    'x²': v*v, 'ln': Math.log(v), 'log': Math.log10(v), 'π': Math.PI
+  const fnMap: Record<string, string> = {
+    'sin': 'sin', 'cos': 'cos', 'tan': 'tan',
+    'sqrt': 'sqrt', 'x^2': 'pow', 'ln': 'ln',
+    'log': 'log', 'pi': 'pi'
   }
-  display.value = String(parseFloat((map[fn]??0).toFixed(10)))
+  const realFn = fnMap[fn] || fn
+  const param = fn === 'x^2' ? 2 : fn === 'pi' ? 1 : 0
+
+  CalcScientific(v, param, realFn).then((result: number) => {
+    const resultStr = String(parseFloat(result.toFixed(10)))
+    expression.value = `${fn}(${display.value}) =`
+    display.value = resultStr
+    current.value = resultStr
+    history.value.unshift({ expr: `${fn}(${v})`, result: resultStr })
+  }).catch(() => {
+    display.value = 'Error'
+  })
+}
+
+function backspace() {
+  if (current.value.length > 1) {
+    current.value = current.value.slice(0, -1)
+    display.value = current.value
+  } else {
+    current.value = '0'
+    display.value = '0'
+  }
 }
 
 function clear() { display.value='0'; expression.value=''; current.value='' }
+
+function useHistory(h: {expr:string, result:string}) {
+  display.value = h.result
+  current.value = h.result
+}
+
+// 键盘快捷键支持
+function handleKeyDown(e: KeyboardEvent) {
+  // 数字键
+  if (/^[0-9]$/.test(e.key)) {
+    e.preventDefault()
+    press(e.key)
+    return
+  }
+  // 运算符
+  if (['+','-','*','/','%'].includes(e.key)) {
+    e.preventDefault()
+    press(e.key)
+    return
+  }
+  // 小数点
+  if (e.key === '.') {
+    e.preventDefault()
+    press('.')
+    return
+  }
+  // 等号或回车
+  if (e.key === '=' || e.key === 'Enter') {
+    e.preventDefault()
+    calculate()
+    return
+  }
+  // 退格键
+  if (e.key === 'Backspace') {
+    e.preventDefault()
+    backspace()
+    return
+  }
+  // Escape 清空
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    clear()
+    return
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 </script>
 <style scoped>
 .calc-screen { padding: 12px 16px; }

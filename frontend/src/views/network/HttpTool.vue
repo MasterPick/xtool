@@ -23,6 +23,22 @@
         </button>
       </div>
 
+      <!-- 自定义 Headers -->
+      <div class="mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="label mb-0">请求头 (Headers)</div>
+          <button @click="addHeader" class="btn btn-secondary py-0.5 px-2 text-xs"><Plus :size="11"/>添加</button>
+        </div>
+        <div class="space-y-1">
+          <div v-for="(h, idx) in headers" :key="idx" class="flex gap-2 items-center">
+            <input v-model="h.key" class="input-field flex-1" placeholder="Header 名称"/>
+            <input v-model="h.value" class="input-field flex-1" placeholder="Header 值"/>
+            <button @click="removeHeader(idx)" class="btn btn-danger py-0.5 px-2 text-xs"><X :size="11"/></button>
+          </div>
+          <div v-if="headers.length === 0" class="text-xs opacity-30">暂无自定义请求头</div>
+        </div>
+      </div>
+
       <!-- 请求体（POST/PUT/PATCH 显示） -->
       <div v-if="['POST','PUT','PATCH'].includes(method)">
         <div class="label">请求体 (JSON)</div>
@@ -63,8 +79,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Globe, Send } from 'lucide-vue-next'
+import { Globe, Send, Plus, X } from 'lucide-vue-next'
+import { useAppStore } from '@/stores/app'
 import { HTTPRequest } from '../../../wailsjs/go/network/NetworkTools'
+
+const appStore = useAppStore()
 
 interface HttpResult {
   statusCode: number; status: string; latencyMs: number
@@ -79,6 +98,7 @@ const loading = ref(false)
 const result  = ref<HttpResult | null>(null)
 const error   = ref('')
 const tab     = ref<'body' | 'headers'>('body')
+const headers = ref<Array<{key: string; value: string}>>([])
 
 const formattedBody = computed(() => {
   if (!result.value?.body) return ''
@@ -89,13 +109,33 @@ const formattedBody = computed(() => {
   }
 })
 
+function addHeader() {
+  headers.value.push({ key: '', value: '' })
+}
+
+function removeHeader(idx: number) {
+  headers.value.splice(idx, 1)
+}
+
+// 构建请求头对象
+function buildHeaders(): Record<string, string> {
+  const h: Record<string, string> = {}
+  for (const header of headers.value) {
+    if (header.key.trim()) {
+      h[header.key.trim()] = header.value
+    }
+  }
+  return h
+}
+
 async function sendRequest() {
   if (!url.value.trim()) return
   loading.value = true
   error.value = ''
   result.value = null
   try {
-    const res = await HTTPRequest(method.value, url.value, body.value, {}) as HttpResult
+    const headersObj = buildHeaders()
+    const res = await HTTPRequest(method.value, url.value, body.value, headersObj) as HttpResult
     if (res.error) {
       error.value = res.error
     } else {
@@ -103,6 +143,7 @@ async function sendRequest() {
     }
   } catch (e) {
     error.value = String(e)
+    appStore.showToast('error', '请求失败: ' + String(e))
   } finally {
     loading.value = false
   }

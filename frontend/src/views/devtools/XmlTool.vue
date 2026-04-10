@@ -6,7 +6,10 @@
       <div class="flex flex-col gap-2 min-h-0">
         <div class="label">输入 XML</div>
         <textarea v-model="input" class="textarea-field flex-1 min-h-0" placeholder="粘贴 XML 内容..." spellcheck="false"/>
-        <button @click="format" class="btn btn-primary"><Wand2 :size="14"/>格式化</button>
+        <div class="flex gap-2">
+          <button @click="format" class="btn btn-primary flex-1"><Wand2 :size="14"/>格式化</button>
+          <button @click="clearAll" class="btn btn-secondary"><Trash2 :size="14"/>清空</button>
+        </div>
       </div>
       <div class="flex flex-col gap-2 min-h-0">
         <div class="label"><span>格式化结果</span>
@@ -22,20 +25,43 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Code2, Wand2, Copy } from 'lucide-vue-next'
+import { Code2, Wand2, Copy, Trash2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { FormatXML } from '../../../wailsjs/go/devtools/DevTools'
 const appStore = useAppStore()
 const input = ref(''), output = ref(''), isError = ref(false)
+
 async function format() {
   if (!input.value.trim()) return
-  const res = await FormatXML(input.value)
-  isError.value = !res.success
-  output.value = res.success ? res.data : res.error
+  isError.value = false
+  output.value = ''
+  try {
+    const res = await FormatXML(input.value)
+    isError.value = !res.success
+    output.value = res.success ? res.data : (res.error || '格式化失败')
+    if (!res.success) {
+      appStore.showToast('error', res.error || '格式化失败')
+    }
+  } catch (e) {
+    isError.value = true
+    output.value = '格式化异常: ' + String(e)
+    appStore.showToast('error', '格式化异常: ' + String(e))
+  }
 }
+
 async function copy() {
   if (!output.value) return
-  await navigator.clipboard.writeText(output.value)
-  appStore.showToast('success', '已复制')
+  try {
+    await navigator.clipboard.writeText(output.value)
+    appStore.showToast('success', '已复制')
+  } catch {
+    appStore.showToast('error', '复制失败')
+  }
+}
+
+function clearAll() {
+  input.value = ''
+  output.value = ''
+  isError.value = false
 }
 </script>

@@ -47,7 +47,8 @@
                   @click="editShortcut(shortcut)"
                   :class="[
                     'shortcut-keys flex items-center gap-1 cursor-pointer transition-all',
-                    editingId === shortcut.id ? 'ring-2 ring-primary-500' : ''
+                    editingId === shortcut.id ? 'ring-2 ring-primary-500' : '',
+                    hasConflict(shortcut) ? 'border-red-500/50' : ''
                   ]"
                 >
                   <template v-if="editingId === shortcut.id">
@@ -60,6 +61,8 @@
                     <span class="text-xs opacity-30">未设置</span>
                   </template>
                 </div>
+                <!-- 冲突提示 -->
+                <span v-if="hasConflict(shortcut)" class="text-xs text-red-400">冲突</span>
                 <!-- 启用开关 -->
                 <label class="toggle-mini">
                   <input type="checkbox" v-model="shortcut.enabled" @change="saveShortcut(shortcut)" />
@@ -118,51 +121,65 @@ interface ShortcutGroup {
   shortcuts: Shortcut[]
 }
 
+// 图标映射（反序列化后恢复图标引用）
+const iconMap: Record<string, any> = {
+  Settings,
+  Code,
+  Cpu,
+  Globe,
+  Search
+}
+
+// 默认快捷键配置
+function getDefaultShortcuts(): ShortcutGroup[] {
+  return [
+    {
+      id: 'general',
+      name: '常规',
+      icon: Settings,
+      shortcuts: [
+        { id: 'search', name: '搜索工具', description: '打开功能搜索', keys: ['Ctrl', 'K'], enabled: true, action: 'search' },
+        { id: 'theme', name: '切换主题', description: '在深色/浅色主题间切换', keys: ['Ctrl', 'Shift', 'T'], enabled: true, action: 'toggleTheme' },
+        { id: 'ontop', name: '窗口置顶', description: '切换窗口置顶状态', keys: ['Ctrl', 'Shift', 'O'], enabled: true, action: 'toggleOnTop' },
+        { id: 'minimize', name: '最小化', description: '最小化到托盘', keys: ['Ctrl', 'M'], enabled: true, action: 'minimize' },
+      ]
+    },
+    {
+      id: 'devtools',
+      name: '开发工具',
+      icon: Code,
+      shortcuts: [
+        { id: 'json', name: 'JSON 工具', description: '打开 JSON 格式化工具', keys: ['Ctrl', 'Shift', 'J'], enabled: true, action: 'openJson' },
+        { id: 'base64', name: 'Base64 工具', description: '打开 Base64 编解码', keys: ['Ctrl', 'Shift', 'B'], enabled: true, action: 'openBase64' },
+        { id: 'hash', name: '哈希计算', description: '打开哈希计算工具', keys: ['Ctrl', 'Shift', 'H'], enabled: true, action: 'openHash' },
+        { id: 'regex', name: '正则测试', description: '打开正则测试工具', keys: ['Ctrl', 'Shift', 'R'], enabled: true, action: 'openRegex' },
+      ]
+    },
+    {
+      id: 'system',
+      name: '系统工具',
+      icon: Cpu,
+      shortcuts: [
+        { id: 'process', name: '进程管理', description: '打开进程管理器', keys: ['Ctrl', 'Shift', 'P'], enabled: false, action: 'openProcess' },
+        { id: 'port', name: '端口查看', description: '打开端口查看工具', keys: [], enabled: false, action: 'openPort' },
+      ]
+    },
+    {
+      id: 'network',
+      name: '网络工具',
+      icon: Globe,
+      shortcuts: [
+        { id: 'ping', name: 'Ping 测试', description: '打开 Ping 工具', keys: [], enabled: false, action: 'openPing' },
+        { id: 'http', name: 'HTTP 测试', description: '打开 HTTP 测试工具', keys: [], enabled: false, action: 'openHttp' },
+      ]
+    }
+  ]
+}
+
 // 状态
 const searchQuery = ref('')
 const editingId = ref<string | null>(null)
-const shortcuts = ref<ShortcutGroup[]>([
-  {
-    id: 'general',
-    name: '常规',
-    icon: Settings,
-    shortcuts: [
-      { id: 'search', name: '搜索工具', description: '打开功能搜索', keys: ['Ctrl', 'K'], enabled: true, action: 'search' },
-      { id: 'theme', name: '切换主题', description: '在深色/浅色主题间切换', keys: ['Ctrl', 'Shift', 'T'], enabled: true, action: 'toggleTheme' },
-      { id: 'ontop', name: '窗口置顶', description: '切换窗口置顶状态', keys: ['Ctrl', 'Shift', 'P'], enabled: true, action: 'toggleOnTop' },
-      { id: 'minimize', name: '最小化', description: '最小化到托盘', keys: ['Ctrl', 'M'], enabled: true, action: 'minimize' },
-    ]
-  },
-  {
-    id: 'devtools',
-    name: '开发工具',
-    icon: Code,
-    shortcuts: [
-      { id: 'json', name: 'JSON 工具', description: '打开 JSON 格式化工具', keys: ['Ctrl', 'Shift', 'J'], enabled: true, action: 'openJson' },
-      { id: 'base64', name: 'Base64 工具', description: '打开 Base64 编解码', keys: ['Ctrl', 'Shift', 'B'], enabled: true, action: 'openBase64' },
-      { id: 'hash', name: '哈希计算', description: '打开哈希计算工具', keys: ['Ctrl', 'Shift', 'H'], enabled: true, action: 'openHash' },
-      { id: 'regex', name: '正则测试', description: '打开正则测试工具', keys: ['Ctrl', 'Shift', 'R'], enabled: true, action: 'openRegex' },
-    ]
-  },
-  {
-    id: 'system',
-    name: '系统工具',
-    icon: Cpu,
-    shortcuts: [
-      { id: 'process', name: '进程管理', description: '打开进程管理器', keys: ['Ctrl', 'Shift', 'P'], enabled: false, action: 'openProcess' },
-      { id: 'port', name: '端口查看', description: '打开端口查看工具', keys: [], enabled: false, action: 'openPort' },
-    ]
-  },
-  {
-    id: 'network',
-    name: '网络工具',
-    icon: Globe,
-    shortcuts: [
-      { id: 'ping', name: 'Ping 测试', description: '打开 Ping 工具', keys: [], enabled: false, action: 'openPing' },
-      { id: 'http', name: 'HTTP 测试', description: '打开 HTTP 测试工具', keys: [], enabled: false, action: 'openHttp' },
-    ]
-  }
-])
+const shortcuts = ref<ShortcutGroup[]>(getDefaultShortcuts())
 
 // 过滤后的分组
 const filteredGroups = computed(() => {
@@ -179,6 +196,20 @@ const filteredGroups = computed(() => {
     }))
     .filter(group => group.shortcuts.length > 0)
 })
+
+// 检测快捷键冲突
+function hasConflict(shortcut: Shortcut): boolean {
+  if (!shortcut.keys || shortcut.keys.length === 0) return false
+  const keyStr = shortcut.keys.join('+')
+  for (const group of shortcuts.value) {
+    for (const s of group.shortcuts) {
+      if (s.id !== shortcut.id && s.keys.length > 0 && s.keys.join('+') === keyStr) {
+        return true
+      }
+    }
+  }
+  return false
+}
 
 // 编辑快捷键
 function editShortcut(shortcut: Shortcut) {
@@ -198,14 +229,17 @@ function clearShortcut(shortcut: Shortcut) {
 
 // 保存快捷键
 function saveShortcut(shortcut: Shortcut) {
-  // 实际项目中需要保存到后端
+  // 检测冲突
+  if (shortcut.keys.length > 0 && hasConflict(shortcut)) {
+    appStore.showToast('warning', `快捷键 ${shortcut.keys.join('+')} 与其他快捷键冲突`)
+  }
   localStorage.setItem('shortcuts', JSON.stringify(shortcuts.value))
   appStore.showToast('success', '快捷键已保存')
 }
 
 // 重置全部
 function resetAll() {
-  // 重置为默认值
+  shortcuts.value = getDefaultShortcuts()
   localStorage.removeItem('shortcuts')
   appStore.showToast('success', '已重置为默认快捷键')
 }
@@ -239,17 +273,41 @@ function handleKeyDown(e: KeyboardEvent) {
     keys.push(mainKey)
   }
 
+  // 检测冲突
+  const keyStr = keys.join('+')
+  let conflictName = ''
+  for (const group of shortcuts.value) {
+    for (const s of group.shortcuts) {
+      if (s.id !== editingId.value && s.keys.length > 0 && s.keys.join('+') === keyStr) {
+        conflictName = s.name
+        break
+      }
+    }
+    if (conflictName) break
+  }
+
   // 更新快捷键
   for (const group of shortcuts.value) {
     const shortcut = group.shortcuts.find(s => s.id === editingId.value)
     if (shortcut) {
       shortcut.keys = keys
       saveShortcut(shortcut)
+      if (conflictName) {
+        appStore.showToast('warning', `快捷键 ${keyStr} 与"${conflictName}"冲突`)
+      }
       break
     }
   }
 
   editingId.value = null
+}
+
+// 恢复图标引用（反序列化后 icon 丢失的修复）
+function restoreIcons(data: any[]): ShortcutGroup[] {
+  return data.map((group: any) => ({
+    ...group,
+    icon: iconMap[group.id] || Settings
+  }))
 }
 
 onMounted(() => {
@@ -259,9 +317,11 @@ onMounted(() => {
   const saved = localStorage.getItem('shortcuts')
   if (saved) {
     try {
-      shortcuts.value = JSON.parse(saved)
+      const parsed = JSON.parse(saved)
+      shortcuts.value = restoreIcons(parsed)
     } catch {
-      // 忽略
+      // 解析失败使用默认值
+      shortcuts.value = getDefaultShortcuts()
     }
   }
 })

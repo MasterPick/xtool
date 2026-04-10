@@ -156,6 +156,7 @@
 import { ref, onMounted } from 'vue'
 import { Globe2, Search, Loader2, AlertCircle, CheckCircle, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
+import { DNSQuery } from '../../../wailsjs/go/network/NetworkTools'
 
 const appStore = useAppStore()
 
@@ -170,7 +171,7 @@ const history = ref<string[]>([])
 // 快捷域名
 const quickDomains = ['google.com', 'github.com', 'baidu.com', 'qq.com', 'openai.com']
 
-// 查询 DNS
+// 查询 DNS（调用后端方法）
 async function query() {
   if (!domain.value.trim()) return
 
@@ -178,37 +179,44 @@ async function query() {
   result.value = null
 
   try {
-    // 使用 DNS over HTTPS (DoH) 服务
-    const dohUrl = `https://dns.google/resolve?name=${domain.value}&type=${recordType.value}`
-    const response = await fetch(dohUrl)
-    const data = await response.json()
+    const startTime = performance.now()
+    const res = await DNSQuery(domain.value.trim(), recordType.value) as any
+    const queryTime = Math.round(performance.now() - startTime)
 
-    if (data.Status !== 0) {
+    if (res && res.error) {
       result.value = {
-        error: getDnsStatus(data.Status),
+        error: res.error,
         domain: domain.value,
         type: recordType.value
       }
-    } else {
-      const records = data.Answer?.map((a: any) => ({
+    } else if (res && (res.records || res.Answer)) {
+      const records = res.records || (res.Answer || []).map((a: any) => ({
         value: a.data,
         ttl: a.TTL
-      })) || []
+      }))
 
       result.value = {
         domain: domain.value,
         type: recordType.value,
         records,
-        queryTime: 0,
-        dnsServer: 'dns.google (8.8.8.8)',
-        raw: data
+        queryTime: res.queryTime || queryTime,
+        dnsServer: res.dnsServer || '系统默认',
+        raw: res
       }
 
       // 添加到历史
       if (!history.value.includes(domain.value)) {
         history.value.unshift(domain.value)
         if (history.value.length > 20) history.value.pop()
-        localStorage.setItem('dnsHistory', JSON.stringify(history.value))
+        try {
+          localStorage.setItem('dnsHistory', JSON.stringify(history.value))
+        } catch { /* 忽略 */ }
+      }
+    } else {
+      result.value = {
+        error: '查询返回空结果',
+        domain: domain.value,
+        type: recordType.value
       }
     }
   } catch (err) {
@@ -217,22 +225,10 @@ async function query() {
       domain: domain.value,
       type: recordType.value
     }
+    appStore.showToast('error', 'DNS 查询失败: ' + String(err))
   } finally {
     isLoading.value = false
   }
-}
-
-// DNS 状态码转换
-function getDnsStatus(status: number): string {
-  const statusMap: Record<number, string> = {
-    0: '成功',
-    1: '格式错误',
-    2: '服务器错误',
-    3: '域名不存在',
-    4: '未实现',
-    5: '拒绝'
-  }
-  return statusMap[status] || `未知错误 (${status})`
 }
 
 // 记录类型颜色
@@ -251,8 +247,12 @@ function getRecordColor(type: string): string {
 
 // 复制值
 async function copyValue(value: string) {
-  await navigator.clipboard.writeText(value)
-  appStore.showToast('success', '已复制')
+  try {
+    await navigator.clipboard.writeText(value)
+    appStore.showToast('success', '已复制')
+  } catch {
+    appStore.showToast('error', '复制失败')
+  }
 }
 
 // 加载历史

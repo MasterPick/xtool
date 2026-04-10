@@ -28,7 +28,7 @@
               <span :class="['badge', p.status==='LISTEN'?'badge-success':'badge-info']">{{ p.status }}</span>
             </td>
             <td class="py-2">
-              <button @click="releasePort(p.port)" class="btn btn-danger py-0.5 px-2 text-xs">
+              <button @click="confirmRelease(p)" class="btn btn-danger py-0.5 px-2 text-xs">
                 <Zap :size="10"/>释放
               </button>
             </td>
@@ -37,6 +37,24 @@
       </table>
       <div v-if="filteredPorts.length===0 && !loading" class="text-center opacity-30 pt-16">
         <Network :size="36" class="mx-auto mb-2"/><div>暂无数据，点击刷新</div>
+      </div>
+    </div>
+
+    <!-- 释放端口确认弹窗 -->
+    <div v-if="releaseConfirm" class="modal-overlay" @click.self="releaseConfirm=null">
+      <div class="modal-box card w-[400px]">
+        <div class="font-semibold mb-3 text-red-400">确认释放端口</div>
+        <div class="text-sm mb-4">
+          确定要释放端口 <span class="font-mono text-primary-400">{{ releaseConfirm.port }}</span> 吗？
+          <div v-if="releaseConfirm.process" class="mt-2 text-xs opacity-50">
+            该端口被进程 <span class="font-mono">{{ releaseConfirm.process }}</span> (PID: {{ releaseConfirm.pid }}) 占用。
+          </div>
+          <div class="mt-2 text-xs opacity-50">释放端口将终止占用该端口的进程。</div>
+        </div>
+        <div class="flex gap-2 justify-end">
+          <button @click="releaseConfirm=null" class="btn btn-secondary">取消</button>
+          <button @click="doRelease" class="btn btn-danger">确认释放</button>
+        </div>
       </div>
     </div>
   </div>
@@ -50,19 +68,40 @@ const appStore = useAppStore()
 const ports = ref<any[]>([])
 const filterPort = ref<number|null>(null)
 const loading = ref(false)
+const releaseConfirm = ref<any>(null)
 const filteredPorts = computed(() =>
   filterPort.value ? ports.value.filter(p => p.port === filterPort.value) : ports.value
 )
 async function loadPorts() {
   loading.value = true
-  try { ports.value = await GetPortList() as any[] } finally { loading.value = false }
+  try {
+    ports.value = await GetPortList() as any[]
+  } catch (e) {
+    appStore.showToast('error', '加载端口信息失败: ' + String(e))
+  } finally {
+    loading.value = false
+  }
 }
-async function releasePort(port: number) {
+
+function confirmRelease(p: any) {
+  releaseConfirm.value = p
+}
+
+async function doRelease() {
+  if (!releaseConfirm.value) return
+  const port = releaseConfirm.value.port
+  releaseConfirm.value = null
   try {
     await ReleasePort(port)
     appStore.showToast('success', `端口 ${port} 已释放`)
     loadPorts()
-  } catch(e) { appStore.showToast('error', String(e)) }
+  } catch (e) {
+    appStore.showToast('error', `释放端口 ${port} 失败: ${e}`)
+  }
 }
+
 onMounted(loadPorts)
 </script>
+<style scoped>
+.modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:100; }
+</style>
