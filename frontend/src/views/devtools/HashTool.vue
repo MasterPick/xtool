@@ -66,10 +66,10 @@ async function calcAll() {
       CalcSHA256(inputText.value).catch((e: unknown) => ({ success: false, error: String(e) })),
       CalcSHA512(inputText.value).catch((e: unknown) => ({ success: false, error: String(e) })),
     ])
-    if (md5.success !== false) { results.value[0].value = md5.data } else { results.value[0].error = md5.error }
-    if (sha1.success !== false) { results.value[1].value = sha1.data } else { results.value[1].error = sha1.error }
-    if (sha256.success !== false) { results.value[2].value = sha256.data } else { results.value[2].error = sha256.error }
-    if (sha512.success !== false) { results.value[3].value = sha512.data } else { results.value[3].error = sha512.error }
+    if (md5.success !== false) { results.value[0].value = (md5 as any).data } else { results.value[0].error = (md5 as any).error }
+    if (sha1.success !== false) { results.value[1].value = (sha1 as any).data } else { results.value[1].error = (sha1 as any).error }
+    if (sha256.success !== false) { results.value[2].value = (sha256 as any).data } else { results.value[2].error = (sha256 as any).error }
+    if (sha512.success !== false) { results.value[3].value = (sha512 as any).data } else { results.value[3].error = (sha512 as any).error }
 
     appStore.showToast('success', '哈希计算完成')
   } catch (e) {

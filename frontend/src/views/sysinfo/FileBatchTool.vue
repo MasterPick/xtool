@@ -185,7 +185,6 @@
 import { ref, computed } from 'vue'
 import { FolderSearch, FolderOpen, Search, Settings2, Copy, FolderInput, Trash2, Play, Loader2, File as FileIcon } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
-import { OpenFileDialog } from '../../../wailsjs/runtime/runtime'
 import { FileOperation } from '../../../wailsjs/go/sysinfo/SysInfo'
 
 const appStore = useAppStore()
@@ -233,56 +232,65 @@ const canExecute = computed(() => {
 // 选择源目录
 async function selectSourceDir() {
   try {
-    const dir = await OpenFileDialog({ Title: '选择源目录', CanCreateDirectories: true })
+    const dir = prompt('请输入源目录路径:')
     if (dir) {
       sourceDir.value = dir
-      appStore.showToast('success', `已选择目录: ${dir}`)
+      appStore.showToast('success', `已设置目录: ${dir}`)
     }
   } catch (e) {
-    appStore.showToast('error', '选择目录失败: ' + String(e))
+    appStore.showToast('error', '设置目录失败: ' + String(e))
   }
 }
 
 // 选择目标目录
 async function selectTargetDir() {
   try {
-    const dir = await OpenFileDialog({ Title: '选择目标目录', CanCreateDirectories: true })
+    const dir = prompt('请输入目标目录路径:')
     if (dir) {
       targetDir.value = dir
-      appStore.showToast('success', `已选择目标: ${dir}`)
+      appStore.showToast('success', `已设置目标: ${dir}`)
     }
   } catch (e) {
-    appStore.showToast('error', '选择目录失败: ' + String(e))
+    appStore.showToast('error', '设置目录失败: ' + String(e))
   }
 }
 
-// 扫描文件 - 使用 OpenFileDialog 选择文件
+// 扫描文件 - 手动添加文件路径
 async function scanFiles() {
-  if (!sourceDir.value) return
+  if (!sourceDir.value) {
+    appStore.showToast('warning', '请先设置源目录')
+    return
+  }
   scanning.value = true
-  files.value = []
   try {
-    const result = await OpenFileDialog({
-      Title: '选择要处理的文件',
-      Directory: sourceDir.value,
-    })
-    if (result) {
-      // OpenFileDialog 可能返回单个文件路径或多个文件路径
-      const selectedPaths = Array.isArray(result) ? result : [result]
-      for (const p of selectedPaths) {
-        const name = p.split(/[/\\]/).pop() || p
+    // 提示用户输入文件名（逗号分隔）
+    const input = prompt('请输入要处理的文件名（多个用逗号分隔，留空则处理目录下所有文件）:')
+    if (input === null) { scanning.value = false; return }
+
+    if (input.trim() === '') {
+      // 处理目录下所有文件 - 使用通配符
+      files.value.push({
+        name: '* (所有文件)',
+        path: sourceDir.value,
+        size: 0,
+        modTime: '',
+        selected: true,
+      })
+    } else {
+      const names = input.split(',').map(s => s.trim()).filter(Boolean)
+      for (const name of names) {
         files.value.push({
           name,
-          path: p,
+          path: sourceDir.value + '/' + name,
           size: 0,
           modTime: '',
-          selected: false,
+          selected: true,
         })
       }
-      appStore.showToast('success', `已选择 ${files.value.length} 个文件`)
     }
+    appStore.showToast('success', `已添加 ${files.value.length} 个文件`)
   } catch (e) {
-    appStore.showToast('error', '选择文件失败: ' + String(e))
+    appStore.showToast('error', '添加文件失败: ' + String(e))
   } finally {
     scanning.value = false
   }

@@ -83,7 +83,6 @@ import { ref } from 'vue'
 import { FilePen, Upload, FolderOpen } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 import { BatchRename } from '../../../wailsjs/go/sysinfo/SysInfo'
-import { OpenFileDialog } from '../../../wailsjs/runtime/runtime'
 const appStore = useAppStore()
 
 const files = ref<{original:string,renamed:string,path:string}[]>([])
@@ -97,13 +96,13 @@ const seqBaseName = ref(''), seqStart = ref(1), seqSeparator = ref('_')
 // 选择目录
 async function selectDirectory() {
   try {
-    const dir = await OpenFileDialog({ Title: '选择文件所在目录' })
+    const dir = prompt('请输入文件所在目录路径:')
     if (dir) {
       directory.value = dir
-      appStore.showToast('success', `已选择目录: ${dir}`)
+      appStore.showToast('success', `已设置目录: ${dir}`)
     }
   } catch (e) {
-    appStore.showToast('error', '选择目录失败: ' + String(e))
+    appStore.showToast('error', '设置目录失败: ' + String(e))
   }
 }
 

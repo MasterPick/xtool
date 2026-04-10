@@ -88,7 +88,7 @@
 import { ref, computed } from 'vue'
 import { Globe, Search, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
-import { WhoisLookup } from '../../../wailsjs/go/network/NetworkTools'
+import { WhoisQuery } from '../../../wailsjs/go/network/NetworkTools'
 
 interface WhoisInfo {
   domainName: string
@@ -190,7 +190,7 @@ async function query() {
   showRaw.value = false
 
   try {
-    const res = await WhoisLookup(domain.value.trim()) as any
+    const res = await WhoisQuery(domain.value.trim()) as any
     if (res && res.success !== false) {
       resultText.value = res.data || res.raw || JSON.stringify(res, null, 2)
       whoisInfo.value = parseWhoisData(resultText.value)
