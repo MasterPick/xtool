@@ -105,7 +105,6 @@
         </template>
       </div>
     </div>
-  </div>
   </ToolPage>
 </template>
 
