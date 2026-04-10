@@ -132,14 +132,14 @@ async function convert() {
     return
   }
   try {
-    const res = await ConvertDocument(inputText.value, fromFormat.value, toFormat.value)
+    const res = await ConvertDocument(inputText.value, fromFormat.value, toFormat.value) as any
     if (res.success) {
-      outputText.value = res.data
+      outputText.value = res.data || ''
       resultStatus.value = 'success'
       resultLabel.value = '转换成功'
       appStore.showToast('success', `${fromFormatLabel.value} → ${toFormatLabel.value} 转换完成`)
     } else {
-      outputText.value = res.error
+      outputText.value = res.error || '转换失败'
       resultStatus.value = 'error'
       resultLabel.value = '转换失败'
       appStore.showToast('error', res.error || '转换失败')
