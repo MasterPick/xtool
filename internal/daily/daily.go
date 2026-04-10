@@ -21,6 +21,13 @@ type DailyTools struct {
 	db *db.Database // 数据库连接
 }
 
+// ToolResult 通用工具返回结果
+type ToolResult struct {
+	Success bool   `json:"success"`
+	Data    string `json:"data,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
 // Note 备忘录结构
 type Note struct {
 	ID        int64  `json:"id"`
