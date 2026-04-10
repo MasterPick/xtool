@@ -1058,9 +1058,6 @@ func convertHTMLToPlain(htmlContent string) string {
 
 // convertHTMLToMarkdown 将 HTML 转换为 Markdown（简单逆向转换）
 func convertHTMLToMarkdown(htmlContent string) string {
-	// 先转为纯文本作为基础
-	plain := convertHTMLToPlain(htmlContent)
-
 	// 简单的逆向转换
 	// 由于完整的 HTML -> Markdown 转换非常复杂，这里提供基本支持
 	// 提取标题
