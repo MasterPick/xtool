@@ -161,29 +161,7 @@ func safeEval(expr string) (float64, error) {
 	tokens := tokenize(expr)
 	pos := 0
 
-	// 解析加法/减法（最低优先级）
-	parseAddSub := func() (float64, error) {
-		left, err := parseMulDiv(tokens, &pos)
-		if err != nil {
-			return 0, err
-		}
-		for pos < len(tokens) && (tokens[pos] == "+" || tokens[pos] == "-") {
-			op := tokens[pos]
-			pos++
-			right, err := parseMulDiv(tokens, &pos)
-			if err != nil {
-				return 0, err
-			}
-			if op == "+" {
-				left += right
-			} else {
-				left -= right
-			}
-		}
-		return left, nil
-	}
-
-	result, err := parseAddSub()
+	result, err := parseAddSub(tokens, &pos)
 	if err != nil {
 		return 0, err
 	}
@@ -191,6 +169,28 @@ func safeEval(expr string) (float64, error) {
 		return 0, fmt.Errorf("表达式解析不完整，剩余部分: %s", strings.Join(tokens[pos:], " "))
 	}
 	return result, nil
+}
+
+// parseAddSub 解析加减法（最低优先级）
+func parseAddSub(tokens []string, pos *int) (float64, error) {
+	left, err := parseMulDiv(tokens, pos)
+	if err != nil {
+		return 0, err
+	}
+	for *pos < len(tokens) && (tokens[*pos] == "+" || tokens[*pos] == "-") {
+		op := tokens[*pos]
+		*pos++
+		right, err := parseMulDiv(tokens, pos)
+		if err != nil {
+			return 0, err
+		}
+		if op == "+" {
+			left += right
+		} else {
+			left -= right
+		}
+	}
+	return left, nil
 }
 
 // parseMulDiv 解析乘除法
