@@ -1,9 +1,5 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Settings2 :size="20" class="text-primary-400"/>设置</div>
-      <div class="page-desc">主题、外观、快捷键、关于</div>
-    </div>
+  <ToolPage title="设置" description="应用配置与个性化设置">
 
     <div class="flex-1 overflow-auto space-y-4">
       <!-- 主题设置 -->
@@ -73,10 +69,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { Settings2, Palette, AppWindow, Info, Minus, Plus } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
@@ -137,7 +134,7 @@ onMounted(async () => {
 .toggle-switch input { display: none; }
 .toggle-track {
   display: block; width: 38px; height: 22px;
-  background: rgba(255,255,255,0.1);
+  background: var(--bg-hover);
   border-radius: 11px;
   transition: background 0.2s;
   position: relative;

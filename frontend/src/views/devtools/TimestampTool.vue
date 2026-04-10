@@ -1,9 +1,5 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Clock :size="20" class="text-primary-400"/>时间戳转换</div>
-      <div class="page-desc">时间戳与日期时间互相转换</div>
-    </div>
+  <ToolPage title="时间戳转换" description="Unix 时间戳与日期互转">
 
     <!-- 当前时间 -->
     <div class="card mb-4">
@@ -36,10 +32,11 @@
         <div class="code-output text-sm" :class="dateError ? 'text-red-400' : ''">{{ dateResult || '结果显示在这里...' }}</div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { Clock, RefreshCw } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

@@ -1,10 +1,8 @@
 <template>
-  <!-- 接口文档生成工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><FileText :size="20" class="text-primary-400"/>接口文档生成</div>
-      <div class="page-desc">快速生成 API 接口 Markdown 文档</div>
-    </div>
+  <ToolPage title="接口文档生成" description="Markdown 格式接口文档">
+<!-- 接口文档生成工具 -->
+  
+    
 
     <!-- 基本信息表单 -->
     <div class="card mb-4">
@@ -107,10 +105,11 @@
       <div class="label mb-2">Markdown 预览</div>
       <div class="code-output text-sm whitespace-pre-wrap font-mono">{{ markdownDoc }}</div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { FileText, Plus, Trash2, Wand2, Copy, Download } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

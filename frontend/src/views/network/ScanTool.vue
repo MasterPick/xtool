@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><Radar :size="20" class="text-primary-400"/>内网 IP 扫描</div>
-    <div class="page-desc">扫描局域网内在线设备</div>
-    <div class="card mb-4 flex gap-2 items-center">
+  <ToolPage title="内网扫描" description="局域网设备与服务扫描">
+<div class="card mb-4 flex gap-2 items-center">
       <span class="text-sm opacity-60">子网段：</span>
       <input v-model="subnet" class="input-field w-40" placeholder="如 192.168.1"/>
       <button @click="scan" class="btn btn-primary" :disabled="scanning">
@@ -23,9 +21,10 @@
     <div v-else-if="!scanning" class="flex-1 flex items-center justify-center opacity-30">
       <div class="text-center"><Radar :size="48" class="mx-auto mb-2"/><div>点击开始扫描局域网</div></div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { Radar } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

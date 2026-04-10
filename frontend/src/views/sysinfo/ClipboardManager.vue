@@ -1,10 +1,8 @@
 <template>
-  <!-- 剪贴板管理工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Clipboard :size="20" class="text-primary-400"/>剪贴板管理</div>
-      <div class="page-desc">查看和管理剪贴板历史记录</div>
-    </div>
+  <ToolPage title="剪贴板管理" description="剪贴板历史记录管理">
+<!-- 剪贴板管理工具 -->
+  
+    
 
     <!-- 工具栏 -->
     <div class="flex gap-2 mb-4 items-center">
@@ -74,10 +72,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onUnmounted } from 'vue'
 import { Clipboard, Activity, Trash2, Copy, Pin } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

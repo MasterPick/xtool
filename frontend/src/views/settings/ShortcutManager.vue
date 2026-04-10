@@ -1,15 +1,7 @@
 <template>
-  <!-- 快捷键管理页面 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <Keyboard :size="20" class="text-primary-400" />
-        快捷键管理
-      </div>
-      <div class="page-desc">自定义快捷键 · 快速访问功能</div>
-    </div>
-
+  <ToolPage title="快捷键管理" description="自定义工具快捷键">
+<!-- 快捷键管理页面 -->
+  
     <!-- 搜索 -->
     <div class="toolbar mb-4">
       <input v-model="searchQuery" class="input-field flex-1" placeholder="搜索快捷键..." />
@@ -53,7 +45,8 @@
                 >
                   <template v-if="editingId === shortcut.id">
                     <span class="text-xs opacity-50 animate-pulse">按下快捷键...</span>
-                  </template>
+  </ToolPage>
+</template>
                   <template v-else-if="shortcut.keys">
                     <kbd v-for="key in shortcut.keys" :key="key" class="kbd">{{ key }}</kbd>
                   </template>
@@ -98,6 +91,7 @@
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Keyboard, RotateCcw, X, Settings, Code, Cpu, Globe, Search } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
@@ -348,7 +342,7 @@ onUnmounted(() => {
 
 /* 键盘按键样式 */
 .kbd {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 11px;
@@ -371,7 +365,7 @@ onUnmounted(() => {
   display: block;
   width: 28px;
   height: 16px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
   border-radius: 8px;
   transition: background 0.2s;
   position: relative;

@@ -1,14 +1,5 @@
 <template>
-  <!-- 文件批量处理工具页面 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <FolderSearch :size="20" class="text-primary-400" />
-        文件批量处理
-      </div>
-      <div class="page-desc">文件搜索 · 批量复制 · 批量移动 · 批量删除</div>
-    </div>
+  <ToolPage title="文件批量处理" description="批量复制/移动/删除文件">
 
     <!-- 操作工具栏 -->
     <div class="toolbar mb-4">
@@ -178,10 +169,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { FolderSearch, FolderOpen, Search, Settings2, Copy, FolderInput, Trash2, Play, Loader2, File as FileIcon } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

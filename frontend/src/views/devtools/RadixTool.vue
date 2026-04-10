@@ -1,10 +1,8 @@
 <template>
-  <!-- 进制转换工具：支持二进制、八进制、十进制、十六进制互转 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Binary :size="20" class="text-primary-400"/>进制转换</div>
-      <div class="page-desc">二进制 · 八进制 · 十进制 · 十六进制 互转</div>
-    </div>
+  <ToolPage title="进制转换" description="二进制/八进制/十进制/十六进制互转">
+<!-- 进制转换工具：支持二进制、八进制、十进制、十六进制互转 -->
+  
+    
 
     <!-- 输入区域 -->
     <div class="card mb-4">
@@ -53,10 +51,11 @@
         <div class="code-output text-sm whitespace-pre-wrap font-mono opacity-80">{{ conversionProcess }}</div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { Binary, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

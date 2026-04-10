@@ -1,9 +1,5 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Monitor :size="20" class="text-primary-400"/>系统信息</div>
-      <div class="page-desc">查看 CPU、内存、磁盘、网络等系统详情</div>
-    </div>
+  <ToolPage title="系统信息" description="查看系统硬件与软件信息">
 
     <div v-if="loading" class="flex-1 flex items-center justify-center">
       <div class="text-center opacity-50">
@@ -77,10 +73,11 @@
     <button @click="loadInfo" class="btn btn-secondary mt-4 self-start">
       <RefreshCw :size="14" :class="loading ? 'loading-spin' : ''"/>刷新
     </button>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { Monitor, RefreshCw } from 'lucide-vue-next'
 import { GetSystemInfo } from '../../../wailsjs/go/sysinfo/SysInfo'

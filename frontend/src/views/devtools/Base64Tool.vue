@@ -1,9 +1,5 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Binary :size="20" class="text-primary-400"/>Base64 编解码</div>
-      <div class="page-desc">将文本或文件进行 Base64 编码与解码</div>
-    </div>
+  <ToolPage title="Base64 编解码" description="Base64 文本编码与解码">
 
     <!-- 模式切换 -->
     <div class="tab-bar mb-4">
@@ -34,10 +30,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { Binary, Wand2, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

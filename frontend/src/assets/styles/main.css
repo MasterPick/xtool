@@ -99,6 +99,34 @@
   --border-focus: rgba(139, 92, 246, 0.5);
 }
 
+/* 橙色主题（深色基底） */
+.theme-orange {
+  --bg-primary: #1A120B;
+  --bg-secondary: #221810;
+  --bg-card: #2A1E14;
+  --bg-hover: #332518;
+  --bg-active: #3D2C1C;
+  --accent: #F97316;
+  --accent-hover: #FB923C;
+  --accent-glow: rgba(249, 115, 22, 0.25);
+  --border-color: rgba(249, 115, 22, 0.12);
+  --border-focus: rgba(249, 115, 22, 0.5);
+}
+
+/* 云母主题 */
+.theme-mica {
+  --bg-primary: rgba(30, 30, 40, 0.7);
+  --bg-secondary: rgba(35, 35, 48, 0.6);
+  --bg-card: rgba(40, 40, 55, 0.5);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-active: rgba(99, 102, 241, 0.15);
+  --accent: #6366F1;
+  --accent-hover: #818CF8;
+  --accent-glow: rgba(99, 102, 241, 0.25);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.5);
+}
+
 /* ============ 基础重置 ============ */
 
 *,
@@ -195,6 +223,7 @@ body::before {
 
 /* ============ 页面布局 ============ */
 
+/* @deprecated - 已被 ToolPage 组件替代，保留仅为兼容旧页面 */
 .page-container {
   height: 100%;
   display: flex;

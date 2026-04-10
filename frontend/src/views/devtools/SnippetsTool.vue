@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><BookMarked :size="20" class="text-primary-400"/>代码片段管理</div>
-    <div class="page-desc">保存和管理常用代码片段</div>
-    <div class="flex gap-2 mb-4">
+  <ToolPage title="代码片段" description="代码片段管理与搜索">
+<div class="flex gap-2 mb-4">
       <input v-model="searchKw" class="input-field flex-1" placeholder="搜索片段..." @input="loadList"/>
       <button @click="exportSnippets" class="btn btn-secondary"><Download :size="14"/>导出</button>
       <button @click="triggerImport" class="btn btn-secondary"><Upload :size="14"/>导入</button>
@@ -43,9 +41,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { BookMarked, Plus, Copy, Trash2, Edit3, Download, Upload } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

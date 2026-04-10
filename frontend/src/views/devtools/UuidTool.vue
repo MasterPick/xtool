@@ -1,9 +1,6 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Fingerprint :size="20" class="text-primary-400"/>UUID 生成器</div>
-      <div class="page-desc">批量生成标准 UUID v4</div>
-    </div>
+  <ToolPage title="UUID 生成" description="批量生成 UUID">
+
     <div class="card mb-4 flex items-center gap-4 flex-wrap">
       <div class="label mb-0">生成数量</div>
       <input v-model.number="count" type="number" min="1" max="100"
@@ -33,10 +30,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { Fingerprint, RefreshCw, Copy, Trash2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

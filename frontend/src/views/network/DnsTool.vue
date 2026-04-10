@@ -1,14 +1,5 @@
 <template>
-  <!-- DNS 查询工具页面 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <Globe2 :size="20" class="text-primary-400" />
-        DNS 查询
-      </div>
-      <div class="page-desc">域名解析 · DNS 记录查询 · 批量查询</div>
-    </div>
+  <ToolPage title="DNS 查询" description="域名 DNS 记录查询">
 
     <!-- 查询输入 -->
     <div class="card mb-4">
@@ -149,10 +140,11 @@
         </button>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { Globe2, Search, Loader2, AlertCircle, CheckCircle, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

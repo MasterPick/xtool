@@ -1,15 +1,5 @@
 <template>
-  <!-- 加密解密工具页面 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <Shield :size="20" class="text-primary-400" />
-        加密解密
-      </div>
-      <div class="page-desc">AES / DES / Base64 / MD5 加密解密</div>
-    </div>
-
+  <ToolPage title="加密解密" description="AES/DES/RSA 加密解密">
     <!-- 算法选择 -->
     <div class="toolbar mb-4">
       <div class="tab-bar">
@@ -106,7 +96,8 @@
         <strong class="text-blue-400">说明：</strong>
         <template v-if="currentAlgo === 'md5'">
           MD5 是单向哈希算法，不可逆。用于密码存储、文件校验等。
-        </template>
+  </ToolPage>
+</template>
         <template v-else-if="currentAlgo === 'base64'">
           Base64 是编码方式，非加密。可逆，用于数据传输、URL安全字符等。
         </template>
@@ -119,6 +110,7 @@
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { Shield, Lock, Unlock, ArrowUpDown, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

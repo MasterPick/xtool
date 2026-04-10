@@ -5,8 +5,10 @@ package daily
 import (
 	"crypto/rand"
 	"fmt"
+	"html"
 	"math"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -780,4 +782,403 @@ func cryptoRandInt(max int) int {
 		return 0
 	}
 	return int(n.Int64())
+}
+
+// ============================================================
+// 文档转换工具（DocConverter）
+// ============================================================
+
+// ConvertDocument 文档格式转换
+// input: 输入文本
+// fromFormat: 源格式（markdown/html/plain）
+// toFormat: 目标格式（markdown/html/plain）
+func (d *DailyTools) ConvertDocument(input string, fromFormat, toFormat string) ToolResult {
+	fromFormat = strings.ToLower(strings.TrimSpace(fromFormat))
+	toFormat = strings.ToLower(strings.TrimSpace(toFormat))
+
+	if input == "" {
+		return ToolResult{Success: false, Error: "输入内容不能为空"}
+	}
+
+	// 校验格式
+	validFormats := map[string]bool{"markdown": true, "html": true, "plain": true}
+	if !validFormats[fromFormat] || !validFormats[toFormat] {
+		return ToolResult{Success: false, Error: "不支持的格式（支持: markdown/html/plain）"}
+	}
+
+	// 相同格式直接返回
+	if fromFormat == toFormat {
+		return ToolResult{Success: true, Data: input}
+	}
+
+	// 根据源格式和目标格式选择转换函数
+	key := fromFormat + "->" + toFormat
+	switch key {
+	case "markdown->html":
+		return ToolResult{Success: true, Data: convertMarkdownToHTML(input)}
+	case "html->plain":
+		return ToolResult{Success: true, Data: convertHTMLToPlain(input)}
+	case "html->markdown":
+		return ToolResult{Success: true, Data: convertHTMLToMarkdown(input)}
+	case "plain->html":
+		return ToolResult{Success: true, Data: convertPlainToHTML(input)}
+	case "plain->markdown":
+		return ToolResult{Success: true, Data: convertPlainToMarkdown(input)}
+	case "markdown->plain":
+		// Markdown -> HTML -> Plain
+		htmlContent := convertMarkdownToHTML(input)
+		return ToolResult{Success: true, Data: convertHTMLToPlain(htmlContent)}
+	default:
+		return ToolResult{Success: false, Error: fmt.Sprintf("不支持的转换：%s -> %s", fromFormat, toFormat)}
+	}
+}
+
+// convertMarkdownToHTML 将 Markdown 转换为 HTML
+// 支持：标题(#, ##, ###)、粗体(**text**)、斜体(*text*)、链接[text](url)、
+// 代码块(```)、行内代码(`code`)、无序列表(- item)、有序列表(1. item)、分隔线(---)
+func convertMarkdownToHTML(md string) string {
+	var sb strings.Builder
+	lines := strings.Split(md, "\n")
+	i := 0
+
+	for i < len(lines) {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+
+		// 空行
+		if trimmed == "" {
+			i++
+			continue
+		}
+
+		// 代码块（```开头）
+		if strings.HasPrefix(trimmed, "```") {
+			language := strings.TrimPrefix(trimmed, "```")
+			language = strings.TrimSpace(language)
+			sb.WriteString(fmt.Sprintf("<pre><code class=\"language-%s\">", language))
+			i++
+			for i < len(lines) && !strings.HasPrefix(strings.TrimSpace(lines[i]), "```") {
+				sb.WriteString(html.EscapeString(lines[i]))
+				sb.WriteString("\n")
+				i++
+			}
+			sb.WriteString("</code></pre>\n")
+			if i < len(lines) {
+				i++ // 跳过结束的 ```
+			}
+			continue
+		}
+
+		// 分隔线（--- 或 *** 或 ___）
+		if trimmed == "---" || trimmed == "***" || trimmed == "___" {
+			sb.WriteString("<hr />\n")
+			i++
+			continue
+		}
+
+		// 标题（# ~ ######）
+		if strings.HasPrefix(trimmed, "#") {
+			level := 0
+			for _, ch := range trimmed {
+				if ch == '#' {
+					level++
+				} else {
+					break
+				}
+			}
+			if level <= 6 && (len(trimmed) == level || trimmed[level] == ' ') {
+				title := strings.TrimSpace(trimmed[level:])
+				title = inlineMarkdownToHTML(title)
+				sb.WriteString(fmt.Sprintf("<h%d>%s</h%d>\n", level, title, level))
+				i++
+				continue
+			}
+		}
+
+		// 无序列表（- 或 * 开头）
+		if strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "* ") {
+			sb.WriteString("<ul>\n")
+			for i < len(lines) {
+				itemLine := strings.TrimSpace(lines[i])
+				if !strings.HasPrefix(itemLine, "- ") && !strings.HasPrefix(itemLine, "* ") {
+					break
+				}
+				item := strings.TrimPrefix(itemLine, "- ")
+				item = strings.TrimPrefix(item, "* ")
+				item = inlineMarkdownToHTML(item)
+				sb.WriteString(fmt.Sprintf("<li>%s</li>\n", item))
+				i++
+			}
+			sb.WriteString("</ul>\n")
+			continue
+		}
+
+		// 有序列表（1. 2. 3. 开头）
+		if isOrderedListLine(trimmed) {
+			sb.WriteString("<ol>\n")
+			for i < len(lines) {
+				itemLine := strings.TrimSpace(lines[i])
+				if !isOrderedListLine(itemLine) {
+					break
+				}
+				// 去掉数字和点
+				dotIdx := strings.Index(itemLine, ".")
+				if dotIdx < 0 {
+					break
+				}
+				item := strings.TrimSpace(itemLine[dotIdx+1:])
+				item = inlineMarkdownToHTML(item)
+				sb.WriteString(fmt.Sprintf("<li>%s</li>\n", item))
+				i++
+			}
+			sb.WriteString("</ol>\n")
+			continue
+		}
+
+		// 普通段落
+		para := inlineMarkdownToHTML(trimmed)
+		sb.WriteString(fmt.Sprintf("<p>%s</p>\n", para))
+		i++
+	}
+
+	return sb.String()
+}
+
+// isOrderedListLine 判断是否为有序列表行
+func isOrderedListLine(line string) bool {
+	line = strings.TrimSpace(line)
+	if len(line) < 3 {
+		return false
+	}
+	// 必须以数字开头，后跟点和空格
+	for i := 0; i < len(line); i++ {
+		if line[i] >= '0' && line[i] <= '9' {
+			continue
+		}
+		if line[i] == '.' && i+1 < len(line) && line[i+1] == ' ' {
+			return true
+		}
+		return false
+	}
+	return false
+}
+
+// inlineMarkdownToHTML 处理行内 Markdown 元素
+// 支持：粗体(**text**)、斜体(*text*)、行内代码(`code`)、链接[text](url)、图片![alt](url)
+func inlineMarkdownToHTML(text string) string {
+	// 处理行内代码 `code`
+	codeRe := regexp.MustCompile("`([^`]+)`")
+	text = codeRe.ReplaceAllString(text, "<code>$1</code>")
+
+	// 处理图片 ![alt](url)
+	imgRe := regexp.MustCompile(`!\[([^\]]*)\]\(([^)]+)\)`)
+	text = imgRe.ReplaceAllString(text, `<img src="$2" alt="$1" />`)
+
+	// 处理链接 [text](url)
+	linkRe := regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+	text = linkRe.ReplaceAllString(text, `<a href="$2">$1</a>`)
+
+	// 处理粗体 **text** 或 __text__
+	boldRe := regexp.MustCompile(`\*\*(.+?)\*\*|__(.+?)__`)
+	text = boldRe.ReplaceAllStringFunc(text, func(match string) string {
+		inner := strings.TrimSuffix(strings.TrimPrefix(match, "**"), "**")
+		inner = strings.TrimSuffix(strings.TrimPrefix(inner, "__"), "__")
+		return fmt.Sprintf("<strong>%s</strong>", inner)
+	})
+
+	// 处理斜体 *text* 或 _text_（注意不匹配粗体）
+	italicRe := regexp.MustCompile(`\*(.+?)\*|_(.+?)_`)
+	text = italicRe.ReplaceAllStringFunc(text, func(match string) string {
+		// 跳过已经是 HTML 标签的内容
+		if strings.Contains(match, "<") {
+			return match
+		}
+		inner := strings.TrimSuffix(strings.TrimPrefix(match, "*"), "*")
+		inner = strings.TrimSuffix(strings.TrimPrefix(inner, "_"), "_")
+		if inner == "" {
+			return match
+		}
+		return fmt.Sprintf("<em>%s</em>", inner)
+	})
+
+	return text
+}
+
+// convertHTMLToPlain 将 HTML 转换为纯文本
+// 使用正则去除所有 HTML 标签，保留文本内容
+func convertHTMLToPlain(htmlContent string) string {
+	// 去除 script 和 style 标签及其内容
+	scriptRe := regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
+	htmlContent = scriptRe.ReplaceAllString(htmlContent, "")
+
+	styleRe := regexp.MustCompile(`(?is)<style[^>]*>.*?</style>`)
+	htmlContent = styleRe.ReplaceAllString(htmlContent, "")
+
+	// 将 <br>、<br/>、<p> 等块级标签替换为换行
+	blockRe := regexp.MustCompile(`(?i)<br\s*/?>|</p>|</div>|</h[1-6]>|</li>|</tr>|<hr\s*/?>`)
+	htmlContent = blockRe.ReplaceAllString(htmlContent, "\n")
+
+	// 将块级开始标签也替换为换行
+	blockStartRe := regexp.MustCompile(`(?i)<p[^>]*>|<div[^>]*>|<h[1-6][^>]*>|<li[^>]*>`)
+	htmlContent = blockStartRe.ReplaceAllString(htmlContent, "\n")
+
+	// 将列表项标记
+	htmlContent = regexp.MustCompile(`(?i)</ul>|</ol>`).ReplaceAllString(htmlContent, "\n")
+
+	// 解码 HTML 实体
+	htmlContent = html.UnescapeString(htmlContent)
+
+	// 去除所有剩余 HTML 标签
+	tagRe := regexp.MustCompile(`<[^>]+>`)
+	htmlContent = tagRe.ReplaceAllString(htmlContent, "")
+
+	// 将多个连续换行合并为最多两个
+	newlineRe := regexp.MustCompile(`\n{3,}`)
+	htmlContent = newlineRe.ReplaceAllString(htmlContent, "\n\n")
+
+	// 去除行首行尾空白
+	lines := strings.Split(htmlContent, "\n")
+	var result []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return strings.Join(result, "\n")
+}
+
+// convertHTMLToMarkdown 将 HTML 转换为 Markdown（简单逆向转换）
+func convertHTMLToMarkdown(htmlContent string) string {
+	// 先转为纯文本作为基础
+	plain := convertHTMLToPlain(htmlContent)
+
+	// 简单的逆向转换
+	// 由于完整的 HTML -> Markdown 转换非常复杂，这里提供基本支持
+	// 提取标题
+	titleRe := regexp.MustCompile(`(?i)<h([1-6])[^>]*>(.*?)</h[1-6]>`)
+	htmlContent = titleRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := titleRe.FindStringSubmatch(match)
+		if len(sub) < 3 {
+			return match
+		}
+		level, _ := strconv.Atoi(sub[1])
+		title := convertHTMLToPlain(sub[2])
+		return strings.Repeat("#", level) + " " + title + "\n\n"
+	})
+
+	// 提取链接
+	linkRe := regexp.MustCompile(`(?i)<a[^>]*href="([^"]*)"[^>]*>(.*?)</a>`)
+	htmlContent = linkRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := linkRe.FindStringSubmatch(match)
+		if len(sub) < 3 {
+			return match
+		}
+		text := convertHTMLToPlain(sub[2])
+		return fmt.Sprintf("[%s](%s)", text, sub[1])
+	})
+
+	// 提取粗体
+	boldRe := regexp.MustCompile(`(?i)<strong[^>]*>(.*?)</strong>|<b[^>]*>(.*?)</b>`)
+	htmlContent = boldRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := boldRe.FindStringSubmatch(match)
+		for _, s := range sub[1:] {
+			if s != "" {
+				return fmt.Sprintf("**%s**", convertHTMLToPlain(s))
+			}
+		}
+		return match
+	})
+
+	// 提取斜体
+	italicRe := regexp.MustCompile(`(?i)<em[^>]*>(.*?)</em>|<i[^>]*>(.*?)</i>`)
+	htmlContent = italicRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := italicRe.FindStringSubmatch(match)
+		for _, s := range sub[1:] {
+			if s != "" {
+				return fmt.Sprintf("*%s*", convertHTMLToPlain(s))
+			}
+		}
+		return match
+	})
+
+	// 提取行内代码
+	codeRe := regexp.MustCompile(`(?i)<code[^>]*>(.*?)</code>`)
+	htmlContent = codeRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := codeRe.FindStringSubmatch(match)
+		if len(sub) < 2 {
+			return match
+		}
+		return fmt.Sprintf("`%s`", convertHTMLToPlain(sub[1]))
+	})
+
+	// 提取图片
+	imgRe := regexp.MustCompile(`(?i)<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*/?>|<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*/?>`)
+	htmlContent = imgRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := imgRe.FindStringSubmatch(match)
+		src, alt := "", ""
+		if len(sub) >= 3 {
+			src = sub[1]
+			alt = sub[2]
+		}
+		if src == "" && len(sub) >= 5 {
+			src = sub[4]
+			alt = sub[3]
+		}
+		return fmt.Sprintf("![%s](%s)", alt, src)
+	})
+
+	// 提取代码块
+	preRe := regexp.MustCompile(`(?is)<pre[^>]*><code[^>]*>(.*?)</code></pre>`)
+	htmlContent = preRe.ReplaceAllStringFunc(htmlContent, func(match string) string {
+		sub := preRe.FindStringSubmatch(match)
+		if len(sub) < 2 {
+			return match
+		}
+		code := html.UnescapeString(sub[1])
+		return fmt.Sprintf("```\n%s\n```\n", code)
+	})
+
+	// 去除剩余标签
+	tagRe := regexp.MustCompile(`<[^>]+>`)
+	htmlContent = tagRe.ReplaceAllString(htmlContent, "")
+
+	// 清理多余空行
+	newlineRe := regexp.MustCompile(`\n{3,}`)
+	htmlContent = newlineRe.ReplaceAllString(htmlContent, "\n\n")
+
+	return strings.TrimSpace(htmlContent)
+}
+
+// convertPlainToHTML 将纯文本转换为 HTML
+// 转义 HTML 实体，换行转 <br>，段落用 <p> 包裹
+func convertPlainToHTML(text string) string {
+	// 转义 HTML 特殊字符
+	escaped := html.EscapeString(text)
+
+	// 按段落分割（空行分隔）
+	paragraphs := strings.Split(escaped, "\n\n")
+
+	var sb strings.Builder
+	for _, para := range paragraphs {
+		para = strings.TrimSpace(para)
+		if para == "" {
+			continue
+		}
+		// 将段落内的换行转为 <br>
+		para = strings.ReplaceAll(para, "\n", "<br />\n")
+		sb.WriteString(fmt.Sprintf("<p>%s</p>\n", para))
+	}
+
+	return sb.String()
+}
+
+// convertPlainToMarkdown 将纯文本转换为 Markdown
+// 主要是保持原样，确保特殊字符不被误解
+func convertPlainToMarkdown(text string) string {
+	// 纯文本转 Markdown 基本不需要转换
+	// 只需确保没有 Markdown 特殊字符引起意外格式化
+	// 这里直接返回原文
+	return text
 }

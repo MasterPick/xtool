@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><ArrowLeftRight :size="20" class="text-primary-400"/>单位换算</div>
-    <div class="page-desc">长度 · 重量 · 温度 · 速度</div>
-    <div class="tab-bar mb-4">
+  <ToolPage title="单位换算" description="长度/重量/温度/面积/体积/数据存储换算">
+<div class="tab-bar mb-4">
       <button v-for="t in types" :key="t.id" :class="['tab-item', type===t.id&&'active']" @click="type=t.id">{{ t.label }}</button>
     </div>
     <div class="card">
@@ -27,9 +25,10 @@
       </div>
       <div v-if="result" class="code-output text-center text-lg">{{ result }}</div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { ArrowLeftRight } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

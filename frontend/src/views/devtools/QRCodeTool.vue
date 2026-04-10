@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><QrCode :size="20" class="text-primary-400"/>二维码工具</div>
-    <div class="page-desc">生成二维码（需安装 qrcode.js）</div>
-    <div class="card mb-4">
+  <ToolPage title="二维码" description="二维码生成与解析">
+<div class="card mb-4">
       <div class="label mb-2">输入内容</div>
       <input v-model="text" class="input-field mb-3" placeholder="输入文字、URL 等内容..."/>
       <button @click="generate" class="btn btn-primary"><Wand2 :size="14"/>生成二维码</button>
@@ -14,9 +12,10 @@
       <QrCode :size="48" class="mx-auto mb-2"/>
       <div class="text-sm">输入内容后点击生成</div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { QrCode, Wand2 } from 'lucide-vue-next'
 const text = ref(''), generated = ref(false)

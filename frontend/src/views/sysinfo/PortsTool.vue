@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><Network :size="20" class="text-primary-400"/>端口查看</div>
-    <div class="page-desc">查看端口占用，一键释放</div>
-    <div class="flex gap-2 mb-4">
+  <ToolPage title="端口管理" description="查看端口占用与释放">
+<div class="flex gap-2 mb-4">
       <input v-model="filterPort" class="input-field w-40" placeholder="过滤端口号..." type="number"/>
       <button @click="loadPorts" class="btn btn-primary" :disabled="loading">
         <RefreshCw :size="14" :class="loading?'loading-spin':''"/>刷新
@@ -57,9 +55,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onMounted } from 'vue'
 import { Network, RefreshCw, Zap } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

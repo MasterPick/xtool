@@ -1,9 +1,5 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Hash :size="20" class="text-primary-400"/>哈希计算</div>
-      <div class="page-desc">计算文本的 MD5、SHA1、SHA256、SHA512 哈希值</div>
-    </div>
+  <ToolPage title="哈希计算" description="MD5/SHA1/SHA256/SHA512 哈希值计算">
 
     <div class="card mb-4">
       <div class="label">输入文本</div>
@@ -35,10 +31,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { Hash, Wand2, Trash2, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

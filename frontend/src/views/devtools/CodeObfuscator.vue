@@ -1,10 +1,8 @@
 <template>
-  <!-- 代码混淆工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Shield :size="20" class="text-primary-400"/>代码混淆</div>
-      <div class="page-desc">JavaScript 代码混淆，保护源代码</div>
-    </div>
+  <ToolPage title="代码混淆" description="JavaScript 代码混淆">
+<!-- 代码混淆工具 -->
+  
+    
 
     <!-- 配置区域 -->
     <div class="card mb-4">
@@ -87,10 +85,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, reactive } from 'vue'
 import { Shield, Copy, Download } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

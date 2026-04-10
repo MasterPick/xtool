@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><Server :size="20" class="text-primary-400"/>Hosts 文件编辑</div>
-    <div class="page-desc">查看和编辑系统 Hosts 文件（需要管理员权限保存）</div>
-    <div class="flex gap-2 mb-3">
+  <ToolPage title="Hosts 编辑" description="系统 Hosts 文件编辑">
+<div class="flex gap-2 mb-3">
       <button @click="loadHosts" class="btn btn-secondary"><RefreshCw :size="14"/>刷新</button>
       <button @click="saveHosts" class="btn btn-primary"><Save :size="14"/>保存</button>
       <div class="flex-1"/>
@@ -10,9 +8,10 @@
     </div>
     <textarea v-model="content" class="textarea-field flex-1 min-h-0" spellcheck="false"
       placeholder="加载中..."/>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { Server, RefreshCw, Save } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

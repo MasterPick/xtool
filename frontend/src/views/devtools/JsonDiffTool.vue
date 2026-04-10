@@ -1,14 +1,5 @@
 <template>
-  <!-- JSON 对比工具页面 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <GitCompare :size="20" class="text-primary-400" />
-        JSON 对比
-      </div>
-      <div class="page-desc">对比两个 JSON 的差异 · 高亮显示变化</div>
-    </div>
+  <ToolPage title="JSON 对比" description="结构化 JSON 差异对比">
 
     <!-- 操作工具栏 -->
     <div class="toolbar mb-4">
@@ -129,10 +120,11 @@
         <div class="text-sm">点击"开始对比"查看差异</div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { GitCompare, ArrowLeftRight, Trash2, FileDiff } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

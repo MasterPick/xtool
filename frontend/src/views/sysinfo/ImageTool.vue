@@ -1,15 +1,7 @@
 <template>
-  <!-- 图片工具页面：格式转换、压缩、尺寸调整 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <Image :size="20" class="text-primary-400" />
-        图片工具
-      </div>
-      <div class="page-desc">格式转换 · 图片压缩 · 尺寸调整 · 批量处理</div>
-    </div>
-
+  <ToolPage title="图片工具" description="图片压缩、格式转换、裁剪">
+<!-- 图片工具页面：格式转换、压缩、尺寸调整 -->
+  
     <!-- 操作工具栏 -->
     <div class="toolbar mb-4">
       <button @click="selectFiles" class="btn btn-primary">
@@ -121,10 +113,11 @@
 
     <!-- 隐藏的文件输入 -->
     <input ref="fileInput" type="file" accept="image/*" multiple class="hidden" @change="handleFiles" />
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { Image, Upload, Trash2, ImagePlus, Wand2, Download, X, Loader2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
@@ -344,15 +337,15 @@ function formatSize(bytes: number): string {
   font-weight: 600;
 }
 
-.status-pending { background: rgba(255, 255, 255, 0.1); }
-.status-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-.status-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.status-pending { background: var(--bg-hover); }
+.status-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+.status-error { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 
 /* 质量滑块 */
 input[type="range"] {
   -webkit-appearance: none;
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
   border-radius: 2px;
   cursor: pointer;
 }

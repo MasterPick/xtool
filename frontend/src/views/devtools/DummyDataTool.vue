@@ -1,10 +1,8 @@
 <template>
-  <!-- 占位文本/测试数据生成工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Database :size="20" class="text-primary-400"/>测试数据生成</div>
-      <div class="page-desc">生成姓名、手机号、邮箱、地址等测试数据</div>
-    </div>
+  <ToolPage title="占位文本生成" description="批量生成测试数据">
+<!-- 占位文本/测试数据生成工具 -->
+  
+    
 
     <!-- 配置区域 -->
     <div class="card mb-4">
@@ -60,10 +58,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { Database, Wand2, Copy, Download } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

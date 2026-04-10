@@ -1,13 +1,5 @@
 <template>
-  <div class="page-container">
-    <!-- 标题 -->
-    <div class="mb-4">
-      <div class="page-title">
-        <Regex :size="20" class="text-primary-400" />
-        正则测试
-      </div>
-      <div class="page-desc">测试正则表达式 · 匹配高亮 · 常用模板</div>
-    </div>
+  <ToolPage title="正则测试" description="正则表达式实时匹配测试">
 
     <!-- 正则输入 -->
     <div class="card mb-3">
@@ -130,10 +122,11 @@
         </span>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { Regex, Play, AlertCircle } from 'lucide-vue-next'
 

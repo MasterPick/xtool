@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><StickyNote :size="20" class="text-primary-400"/>备忘录</div>
-    <div class="page-desc">快速记录想法与待办事项</div>
-    <div class="flex gap-2 mb-4">
+  <ToolPage title="备忘录" description="备忘录管理与搜索">
+<div class="flex gap-2 mb-4">
       <input v-model="searchKw" class="input-field flex-1" placeholder="搜索备忘录..."/>
       <button @click="openAdd" class="btn btn-primary"><Plus :size="14"/>新建备忘</button>
     </div>
@@ -47,9 +45,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onMounted } from 'vue'
 import { StickyNote, Plus, Pin, Trash2, Edit3 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

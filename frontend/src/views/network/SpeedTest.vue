@@ -1,10 +1,8 @@
 <template>
-  <!-- 网络测速工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Gauge :size="20" class="text-primary-400"/>网络测速</div>
-      <div class="page-desc">测试网络下载速度、上传速度和延迟</div>
-    </div>
+  <ToolPage title="网络测速" description="下载/上传速度与延迟测试">
+<!-- 网络测速工具 -->
+  
+    
 
     <!-- 控制区域 -->
     <div class="card mb-4">
@@ -133,10 +131,11 @@
         <div class="text-sm">点击"开始测速"按钮</div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onUnmounted } from 'vue'
 import { Gauge, Trash2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><Code2 :size="20" class="text-primary-400"/>XML 工具</div>
-    <div class="page-desc">XML 格式化与美化</div>
-    <div class="two-col flex-1 min-h-0">
+  <ToolPage title="XML 工具" description="XML 格式化与压缩">
+<div class="two-col flex-1 min-h-0">
       <div class="flex flex-col gap-2 min-h-0">
         <div class="label">输入 XML</div>
         <textarea v-model="input" class="textarea-field flex-1 min-h-0" placeholder="粘贴 XML 内容..." spellcheck="false"/>
@@ -21,9 +19,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { Code2, Wand2, Copy, Trash2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

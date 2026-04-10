@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><Cpu :size="20" class="text-primary-400"/>进程管理</div>
-    <div class="page-desc">查看并管理系统运行中的进程</div>
-    <div class="flex gap-2 mb-4">
+  <ToolPage title="进程管理" description="查看与管理系统进程">
+<div class="flex gap-2 mb-4">
       <input v-model="filter" class="input-field flex-1" placeholder="按进程名过滤..."/>
       <select v-model="sortField" class="input-field w-28">
         <option value="cpu">按 CPU</option>
@@ -63,9 +61,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onMounted } from 'vue'
 import { Cpu, RefreshCw, X, ArrowUpDown } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

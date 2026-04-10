@@ -1,15 +1,7 @@
 <template>
-  <!-- 取色器工具页面：屏幕取色、颜色转换、历史记录 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <Pipette :size="20" class="text-primary-400" />
-        取色器
-      </div>
-      <div class="page-desc">屏幕取色 · 颜色转换 · 历史记录</div>
-    </div>
-
+  <ToolPage title="取色器" description="屏幕取色与颜色格式转换">
+<!-- 取色器工具页面：屏幕取色、颜色转换、历史记录 -->
+  
     <!-- 主内容区 -->
     <div class="flex-1 flex flex-col gap-4 min-h-0">
       <!-- 当前颜色展示 -->
@@ -99,10 +91,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Pipette, Palette, History, Trash2, Loader2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
@@ -270,7 +263,7 @@ onMounted(loadHistory)
 
 .color-value:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--text-primary);
 }
 
 /* 格式项 */

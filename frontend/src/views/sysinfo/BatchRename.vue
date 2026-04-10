@@ -1,9 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><FilePen :size="20" class="text-primary-400"/>批量重命名</div>
-    <div class="page-desc">批量重命名文件，支持前缀/后缀/序号/正则替换</div>
-
-    <!-- 目录和文件匹配 -->
+  <ToolPage title="批量重命名" description="批量文件重命名">
+<!-- 目录和文件匹配 -->
     <div class="card mb-4">
       <div class="label mb-2">文件目录</div>
       <div class="flex gap-2 mb-3">
@@ -35,8 +32,8 @@
         <div class="flex gap-2 mb-3">
           <input v-model="pattern" class="input-field flex-1" placeholder="查找（支持正则）..."/>
           <input v-model="replacement" class="input-field flex-1" placeholder="替换为（$1 引用捕获组）..."/>
-        </div>
-      </template>
+  </ToolPage>
+</template>
       <!-- 前缀 -->
       <template v-if="renameMode==='prefix'">
         <div class="flex gap-2 mb-3">
@@ -79,6 +76,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { FilePen, Upload, FolderOpen } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

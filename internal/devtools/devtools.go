@@ -1509,3 +1509,449 @@ func (d *DevTools) SearchSnippets(keyword string) ([]Snippet, error) {
 
 	return snippets, nil
 }
+
+// ============================================================
+// 代码格式化工具（CodeFormatter）
+// ============================================================
+
+// FormatCode 通用代码格式化
+// language 支持: json, xml, html, css, sql, yaml
+// 使用纯 Go 实现，不依赖外部格式化库
+func (d *DevTools) FormatCode(code string, language string) ToolResult {
+	language = strings.ToLower(strings.TrimSpace(language))
+	if code == "" {
+		return ToolResult{Success: false, Error: "代码内容不能为空"}
+	}
+
+	switch language {
+	case "json":
+		return formatCodeJSON(code)
+	case "xml":
+		return formatCodeXML(code)
+	case "html":
+		return formatCodeHTML(code)
+	case "css":
+		return formatCodeCSS(code)
+	case "sql":
+		return formatCodeSQL(code)
+	case "yaml":
+		return formatCodeYAML(code)
+	default:
+		return ToolResult{Success: false, Error: "不支持的语言格式（支持: json/xml/html/css/sql/yaml）"}
+	}
+}
+
+// formatCodeJSON 格式化 JSON 代码
+func formatCodeJSON(code string) ToolResult {
+	var obj interface{}
+	if err := json.Unmarshal([]byte(code), &obj); err != nil {
+		return ToolResult{Success: false, Error: "JSON 格式错误：" + err.Error()}
+	}
+	formatted, err := json.MarshalIndent(obj, "", "  ")
+	if err != nil {
+		return ToolResult{Success: false, Error: "JSON 格式化失败：" + err.Error()}
+	}
+	return ToolResult{Success: true, Data: string(formatted)}
+}
+
+// formatCodeXML 格式化 XML 代码
+func formatCodeXML(code string) ToolResult {
+	decoder := xml.NewDecoder(strings.NewReader(code))
+	decoder.Strict = false
+
+	var buf bytes.Buffer
+	encoder := xml.NewEncoder(&buf)
+	encoder.Indent("", "  ")
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			break
+		}
+		if err := encoder.EncodeToken(token); err != nil {
+			return ToolResult{Success: false, Error: "XML 编码失败：" + err.Error()}
+		}
+	}
+
+	if err := encoder.Flush(); err != nil {
+		return ToolResult{Success: false, Error: "XML 格式化失败：" + err.Error()}
+	}
+
+	result := buf.String()
+	if result == "" {
+		return ToolResult{Success: false, Error: "XML 格式错误，无法解析"}
+	}
+	return ToolResult{Success: true, Data: result}
+}
+
+// formatCodeHTML 格式化 HTML 代码
+// 基于标签匹配进行简单缩进格式化
+func formatCodeHTML(code string) ToolResult {
+	// 预处理：去除多余空白
+	code = strings.TrimSpace(code)
+
+	var sb strings.Builder
+	indent := 0
+	indentStr := "  "
+
+	// 使用正则匹配 HTML 标签
+	// 匹配：开始标签 <tag>、结束标签 </tag>、自闭合标签 <tag/>、注释 <!-- -->、DOCTYPE
+	tagRe := regexp.MustCompile(`(?s)(<!--.*?-->|<!DOCTYPE[^>]*>|<[^>]+>)`)
+	parts := tagRe.Split(code, -1)
+	tags := tagRe.FindAllString(code, -1)
+
+	// 写入第一个文本节点
+	if len(parts) > 0 && strings.TrimSpace(parts[0]) != "" {
+		sb.WriteString(strings.Repeat(indentStr, indent))
+		sb.WriteString(strings.TrimSpace(parts[0]))
+		sb.WriteString("\n")
+	}
+
+	for i, tag := range tags {
+		trimmedTag := strings.TrimSpace(tag)
+
+		// 注释和 DOCTYPE
+		if strings.HasPrefix(trimmedTag, "<!--") || strings.HasPrefix(trimmedTag, "<!") {
+			sb.WriteString(strings.Repeat(indentStr, indent))
+			sb.WriteString(trimmedTag)
+			sb.WriteString("\n")
+			// 写入标签后的文本
+			if i+1 < len(parts) && strings.TrimSpace(parts[i+1]) != "" {
+				sb.WriteString(strings.Repeat(indentStr, indent))
+				sb.WriteString(strings.TrimSpace(parts[i+1]))
+				sb.WriteString("\n")
+			}
+			continue
+		}
+
+		// 自闭合标签（如 <br/>、<img/>、<input/>、<hr/>、<meta/>、<link/>）
+		if isSelfClosingTag(trimmedTag) {
+			sb.WriteString(strings.Repeat(indentStr, indent))
+			sb.WriteString(trimmedTag)
+			sb.WriteString("\n")
+			if i+1 < len(parts) && strings.TrimSpace(parts[i+1]) != "" {
+				sb.WriteString(strings.Repeat(indentStr, indent))
+				sb.WriteString(strings.TrimSpace(parts[i+1]))
+				sb.WriteString("\n")
+			}
+			continue
+		}
+
+		// 结束标签 </tag>
+		if strings.HasPrefix(trimmedTag, "</") {
+			if indent > 0 {
+				indent--
+			}
+			sb.WriteString(strings.Repeat(indentStr, indent))
+			sb.WriteString(trimmedTag)
+			sb.WriteString("\n")
+			if i+1 < len(parts) && strings.TrimSpace(parts[i+1]) != "" {
+				sb.WriteString(strings.Repeat(indentStr, indent))
+				sb.WriteString(strings.TrimSpace(parts[i+1]))
+				sb.WriteString("\n")
+			}
+			continue
+		}
+
+		// 开始标签 <tag>
+		sb.WriteString(strings.Repeat(indentStr, indent))
+		sb.WriteString(trimmedTag)
+		sb.WriteString("\n")
+
+		// 内联元素不增加缩进（如 span, a, b, i, em, strong）
+		if !isInlineElement(trimmedTag) {
+			indent++
+		}
+
+		// 写入标签后的文本
+		if i+1 < len(parts) && strings.TrimSpace(parts[i+1]) != "" {
+			sb.WriteString(strings.Repeat(indentStr, indent))
+			sb.WriteString(strings.TrimSpace(parts[i+1]))
+			sb.WriteString("\n")
+		}
+	}
+
+	result := sb.String()
+	if result == "" {
+		return ToolResult{Success: false, Error: "HTML 格式化失败"}
+	}
+	return ToolResult{Success: true, Data: result}
+}
+
+// isSelfClosingTag 判断是否为自闭合标签
+func isSelfClosingTag(tag string) bool {
+	selfClosing := []string{"<br", "<img", "<input", "<hr", "<meta", "<link", "<area", "<base", "<col", "<embed", "<source", "<track", "<wbr"}
+	lower := strings.ToLower(tag)
+	for _, sc := range selfClosing {
+		if strings.HasPrefix(lower, sc) {
+			return true
+		}
+	}
+	// 检查以 /> 结尾
+	return strings.HasSuffix(strings.TrimSpace(tag), "/>")
+}
+
+// isInlineElement 判断是否为内联元素（不增加缩进）
+func isInlineElement(tag string) bool {
+	inline := []string{"<span", "<a ", "<a>", "<b>", "<b ", "<i>", "<i ", "<em>", "<em ", "<strong>", "<strong ", "<code>", "<code ", "<sub", "<sup", "<label", "<abbr", "<cite", "<small"}
+	lower := strings.ToLower(tag)
+	for _, il := range inline {
+		if strings.HasPrefix(lower, il) {
+			return true
+		}
+	}
+	return false
+}
+
+// formatCodeCSS 格式化 CSS 代码
+// 基于大括号匹配进行缩进格式化
+func formatCodeCSS(code string) ToolResult {
+	// 预处理：去除多余空白行
+	code = strings.ReplaceAll(code, "\r\n", "\n")
+	code = strings.ReplaceAll(code, "\r", "\n")
+
+	var sb strings.Builder
+	indent := 0
+	indentStr := "  "
+
+	// 按行处理
+	lines := strings.Split(code, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		// 遇到 } 先减少缩进
+		if strings.HasPrefix(trimmed, "}") {
+			if indent > 0 {
+				indent--
+			}
+			sb.WriteString(strings.Repeat(indentStr, indent))
+			sb.WriteString(trimmed)
+			sb.WriteString("\n")
+			continue
+		}
+
+		// 普通行
+		sb.WriteString(strings.Repeat(indentStr, indent))
+		sb.WriteString(trimmed)
+
+		// 遇到 { 增加缩进（下一行）
+		if strings.HasSuffix(trimmed, "{") {
+			indent++
+			sb.WriteString("\n")
+			continue
+		}
+
+		// 如果行中有 { 但不是结尾，拆分处理
+		if strings.Contains(trimmed, "{") && !strings.HasSuffix(trimmed, "{") {
+			sb.WriteString("\n")
+			indent++
+			continue
+		}
+
+		sb.WriteString("\n")
+	}
+
+	result := sb.String()
+	if result == "" {
+		return ToolResult{Success: false, Error: "CSS 格式化失败"}
+	}
+	return ToolResult{Success: true, Data: result}
+}
+
+// formatCodeSQL 格式化 SQL 代码
+// 基于 SELECT/FROM/WHERE/ORDER BY 等关键字换行缩进
+func formatCodeSQL(code string) ToolResult {
+	// 预处理：将多个空白合并为一个空格
+	spaceRe := regexp.MustCompile(`\s+`)
+	code = spaceRe.ReplaceAllString(code, " ")
+	code = strings.TrimSpace(code)
+
+	// SQL 主要关键字（大写匹配）
+	keywords := []string{
+		"SELECT", "FROM", "WHERE", "AND", "OR",
+		"ORDER BY", "GROUP BY", "HAVING", "LIMIT", "OFFSET",
+		"LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "FULL JOIN", "CROSS JOIN", "JOIN",
+		"ON", "UNION", "UNION ALL", "INSERT INTO", "VALUES",
+		"UPDATE", "SET", "DELETE FROM", "CREATE TABLE", "DROP TABLE",
+		"ALTER TABLE", "ADD", "MODIFY", "COLUMN",
+	}
+
+	// 按优先级排序（长的优先匹配）
+	sort.Slice(keywords, func(i, j int) bool {
+		return len(keywords[i]) > len(keywords[j])
+	})
+
+	// 构建正则：匹配关键字（单词边界）
+	var patterns []string
+	for _, kw := range keywords {
+		patterns = append(patterns, `\b`+regexp.QuoteMeta(kw)+`\b`)
+	}
+	combinedRe := regexp.MustCompile(`(?i)(` + strings.Join(patterns, "|") + `)`)
+
+	// 在关键字前插入换行符
+	parts := combinedRe.Split(code, -1)
+	matches := combinedRe.FindAllString(code, -1)
+
+	var sb strings.Builder
+	indent := 0
+	indentStr := "    "
+
+	// 写入第一部分
+	if len(parts) > 0 {
+		first := strings.TrimSpace(parts[0])
+		if first != "" {
+			sb.WriteString(first)
+			sb.WriteString("\n")
+		}
+	}
+
+	// 主关键字（需要增加缩进层级）
+	mainKeywords := map[string]bool{
+		"SELECT": true, "FROM": true, "WHERE": true,
+		"ORDER BY": true, "GROUP BY": true, "HAVING": true,
+		"LIMIT": true, "OFFSET": true,
+		"LEFT JOIN": true, "RIGHT JOIN": true, "INNER JOIN": true,
+		"FULL JOIN": true, "CROSS JOIN": true, "JOIN": true,
+		"UNION": true, "UNION ALL": true,
+		"INSERT INTO": true, "VALUES": true,
+		"UPDATE": true, "SET": true, "DELETE FROM": true,
+		"CREATE TABLE": true, "DROP TABLE": true, "ALTER TABLE": true,
+	}
+
+	// 子句关键字（在当前缩进级别）
+	subKeywords := map[string]bool{
+		"AND": true, "OR": true, "ON": true,
+		"ADD": true, "MODIFY": true, "COLUMN": true,
+	}
+
+	for i, match := range matches {
+		upperMatch := strings.ToUpper(match)
+
+		if mainKeywords[upperMatch] {
+			// 重置缩进到 0（主关键字从行首开始）
+			indent = 0
+			sb.WriteString(match)
+			sb.WriteString("\n")
+			indent = 1
+		} else if subKeywords[upperMatch] {
+			// 子句关键字，保持当前缩进
+			sb.WriteString(strings.Repeat(indentStr, indent > 0 ? indent-1 : 0))
+			sb.WriteString(match)
+			sb.WriteString("\n")
+		} else {
+			sb.WriteString(strings.Repeat(indentStr, indent))
+			sb.WriteString(match)
+			sb.WriteString("\n")
+		}
+
+		// 写入关键字后的内容
+		if i+1 < len(parts) {
+			content := strings.TrimSpace(parts[i+1])
+			if content != "" {
+				// 去掉末尾的分号，单独放一行
+				if strings.HasSuffix(content, ";") {
+					content = strings.TrimSuffix(content, ";")
+					sb.WriteString(strings.Repeat(indentStr, indent))
+					sb.WriteString(content)
+					sb.WriteString("\n;\n")
+				} else {
+					sb.WriteString(strings.Repeat(indentStr, indent))
+					sb.WriteString(content)
+					sb.WriteString("\n")
+				}
+			}
+		}
+	}
+
+	result := sb.String()
+	if result == "" {
+		return ToolResult{Success: false, Error: "SQL 格式化失败"}
+	}
+	return ToolResult{Success: true, Data: result}
+}
+
+// formatCodeYAML 格式化 YAML 代码
+// 简单的基于冒号和缩进的格式化
+func formatCodeYAML(code string) ToolResult {
+	// 预处理
+	code = strings.ReplaceAll(code, "\r\n", "\n")
+	code = strings.ReplaceAll(code, "\r", "\n")
+	code = strings.TrimSpace(code)
+
+	// 列表项标记
+	listMarker := "- "
+
+	var sb strings.Builder
+	indentStr := "  "
+
+	lines := strings.Split(code, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		// 检测当前行的缩进级别
+		originalIndent := 0
+		for _, ch := range line {
+			if ch == ' ' {
+				originalIndent++
+			} else if ch == '\t' {
+				originalIndent += 2
+			} else {
+				break
+			}
+		}
+
+		// 规范化缩进（2空格为单位）
+		normalizedIndent := (originalIndent / 2) * 2
+
+		// 列表项
+		if strings.HasPrefix(trimmed, "- ") {
+			sb.WriteString(strings.Repeat(indentStr, normalizedIndent/2))
+			sb.WriteString(listMarker)
+			sb.WriteString(strings.TrimPrefix(trimmed, "- "))
+			sb.WriteString("\n")
+			continue
+		}
+
+		// 注释行
+		if strings.HasPrefix(trimmed, "#") {
+			sb.WriteString(strings.Repeat(indentStr, normalizedIndent/2))
+			sb.WriteString(trimmed)
+			sb.WriteString("\n")
+			continue
+		}
+
+		// 键值对行（包含冒号）
+		if strings.Contains(trimmed, ":") {
+			colonIdx := strings.Index(trimmed, ":")
+			key := trimmed[:colonIdx]
+			value := strings.TrimSpace(trimmed[colonIdx+1:])
+
+			sb.WriteString(strings.Repeat(indentStr, normalizedIndent/2))
+			sb.WriteString(key)
+			sb.WriteString(":")
+			if value != "" {
+				sb.WriteString(" ")
+				sb.WriteString(value)
+			}
+			sb.WriteString("\n")
+			continue
+		}
+
+		// 其他行（如 --- 分隔符）
+		sb.WriteString(strings.Repeat(indentStr, normalizedIndent/2))
+		sb.WriteString(trimmed)
+		sb.WriteString("\n")
+	}
+
+	result := sb.String()
+	if result == "" {
+		return ToolResult{Success: false, Error: "YAML 格式化失败"}
+	}
+	return ToolResult{Success: true, Data: result}
+}

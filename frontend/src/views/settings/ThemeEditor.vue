@@ -1,15 +1,7 @@
 <template>
-  <!-- 主题编辑器页面 -->
-  <div class="page-container">
-    <!-- 页面标题 -->
-    <div>
-      <div class="page-title">
-        <Palette :size="20" class="text-primary-400" />
-        主题编辑器
-      </div>
-      <div class="page-desc">自定义主题配色 · 实时预览 · 导入导出</div>
-    </div>
-
+  <ToolPage title="主题编辑" description="自定义主题颜色">
+<!-- 主题编辑器页面 -->
+  
     <div class="flex-1 flex gap-4 min-h-0">
       <!-- 左侧：颜色配置 -->
       <div class="w-72 flex flex-col gap-3 shrink-0">
@@ -174,10 +166,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, watch } from 'vue'
 import { Palette, RotateCcw, Check, Download, Upload } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

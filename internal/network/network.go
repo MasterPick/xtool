@@ -932,3 +932,220 @@ func avgFloat64(values []float64) float64 {
 	}
 	return sum / float64(len(values))
 }
+
+// ============================================================
+// 端口转发工具（PortForward）
+// ============================================================
+
+// PortForwardInfo 端口转发规则信息
+type PortForwardInfo struct {
+	ID          string `json:"id"`          // 转发规则唯一标识
+	ListenAddr  string `json:"listenAddr"`  // 监听地址（如 :8080）
+	TargetAddr  string `json:"targetAddr"`  // 目标地址（如 192.168.1.1:80）
+	Status      string `json:"status"`      // 状态：running/stopped/error
+	Error       string `json:"error"`       // 错误信息
+	ConnCount   int64  `json:"connCount"`   // 已处理的连接数
+	CreatedAt   string `json:"createdAt"`   // 创建时间
+}
+
+// PortForwardResult 端口转发操作结果
+type PortForwardResult struct {
+	Success    bool            `json:"success"`    // 是否成功
+	ID         string          `json:"id"`         // 转发规则 ID
+	Error      string          `json:"error"`      // 错误信息
+	Forwards   []PortForwardInfo `json:"forwards"` // 当前所有转发规则
+}
+
+// portForwardEntry 端口转发内部条目
+type portForwardEntry struct {
+	info    PortForwardInfo // 转发信息
+	listener net.Listener   // TCP 监听器
+	cancel  chan struct{}   // 停止信号
+	mu      sync.Mutex      // 连接计数锁
+}
+
+// portForwardManager 端口转发管理器
+type portForwardManager struct {
+	mu       sync.RWMutex              // 读写锁
+	forwards map[string]*portForwardEntry // 转发规则映射
+}
+
+// globalPortForwardManager 全局端口转发管理器实例
+var globalPortForwardManager = &portForwardManager{
+	forwards: make(map[string]*portForwardEntry),
+}
+
+// StartPortForward 启动端口转发
+// listenAddr: 监听地址（如 :8080 或 0.0.0.0:8080）
+// targetAddr: 目标地址（如 192.168.1.1:80 或 localhost:3000）
+func (n *NetworkTools) StartPortForward(listenAddr, targetAddr string) PortForwardResult {
+	// 参数校验
+	listenAddr = strings.TrimSpace(listenAddr)
+	targetAddr = strings.TrimSpace(targetAddr)
+	if listenAddr == "" || targetAddr == "" {
+		return PortForwardResult{Success: false, Error: "监听地址和目标地址不能为空"}
+	}
+
+	// 检查监听地址是否已被占用
+	globalPortForwardManager.mu.RLock()
+	for _, entry := range globalPortForwardManager.forwards {
+		if entry.info.ListenAddr == listenAddr && entry.info.Status == "running" {
+			globalPortForwardManager.mu.RUnlock()
+			return PortForwardResult{Success: false, Error: fmt.Sprintf("监听地址 %s 已被占用", listenAddr)}
+		}
+	}
+	globalPortForwardManager.mu.RUnlock()
+
+	// 创建 TCP 监听
+	listener, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return PortForwardResult{Success: false, Error: fmt.Sprintf("监听失败：%v", err)}
+	}
+
+	// 生成唯一 ID
+	id := fmt.Sprintf("pf_%d", time.Now().UnixNano())
+
+	// 创建转发条目
+	entry := &portForwardEntry{
+		info: PortForwardInfo{
+			ID:         id,
+			ListenAddr: listener.Addr().String(),
+			TargetAddr: targetAddr,
+			Status:     "running",
+			CreatedAt:  time.Now().Format("2006-01-02 15:04:05"),
+		},
+		listener: listener,
+		cancel:   make(chan struct{}),
+	}
+
+	// 注册到管理器
+	globalPortForwardManager.mu.Lock()
+	globalPortForwardManager.forwards[id] = entry
+	globalPortForwardManager.mu.Unlock()
+
+	// 启动转发 goroutine
+	go entry.serve()
+
+	return PortForwardResult{
+		Success:  true,
+		ID:       id,
+		Forwards: globalPortForwardManager.GetAll(),
+	}
+}
+
+// serve 启动端口转发服务循环
+func (e *portForwardEntry) serve() {
+	for {
+		// 接受客户端连接
+		conn, err := e.listener.Accept()
+		if err != nil {
+			// 检查是否被主动停止
+			select {
+			case <-e.cancel:
+				return
+			default:
+				e.info.Status = "error"
+				e.info.Error = fmt.Sprintf("接受连接失败：%v", err)
+				return
+			}
+		}
+
+		// 启动转发 goroutine 处理每个连接
+		go e.forwardConnection(conn)
+	}
+}
+
+// forwardConnection 转发单个连接（双向数据转发）
+func (e *portForwardEntry) forwardConnection(clientConn net.Conn) {
+	// 更新连接计数
+	e.mu.Lock()
+	e.info.ConnCount++
+	e.mu.Unlock()
+
+	// 连接目标服务器
+	targetConn, err := net.DialTimeout("tcp", e.info.TargetAddr, 10*time.Second)
+	if err != nil {
+		clientConn.Close()
+		return
+	}
+
+	// 双向转发：客户端 <-> 目标服务器
+	// 使用两个 goroutine 分别处理两个方向的数据流
+	done := make(chan struct{})
+
+	// 客户端 -> 目标
+	go func() {
+		io.Copy(targetConn, clientConn)
+		done <- struct{}{}
+	}()
+
+	// 目标 -> 客户端
+	go func() {
+		io.Copy(clientConn, targetConn)
+		done <- struct{}{}
+	}()
+
+	// 等待任意一个方向的数据流结束
+	<-done
+
+	// 关闭两个连接
+	clientConn.Close()
+	targetConn.Close()
+
+	// 等待另一个方向也结束（防止资源泄漏）
+	<-done
+}
+
+// StopPortForward 停止指定的端口转发规则
+func (n *NetworkTools) StopPortForward(id string) PortForwardResult {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return PortForwardResult{Success: false, Error: "转发规则 ID 不能为空"}
+	}
+
+	globalPortForwardManager.mu.Lock()
+	entry, exists := globalPortForwardManager.forwards[id]
+	if !exists {
+		globalPortForwardManager.mu.Unlock()
+		return PortForwardResult{Success: false, Error: fmt.Sprintf("未找到转发规则：%s", id)}
+	}
+
+	// 更新状态
+	entry.info.Status = "stopped"
+
+	// 关闭监听器（会触发 serve 循环退出）
+	entry.listener.Close()
+	close(entry.cancel)
+
+	// 从管理器中移除
+	delete(globalPortForwardManager.forwards, id)
+	globalPortForwardManager.mu.Unlock()
+
+	return PortForwardResult{
+		Success:  true,
+		ID:       id,
+		Forwards: globalPortForwardManager.GetAll(),
+	}
+}
+
+// GetPortForwards 获取所有端口转发规则列表
+func (n *NetworkTools) GetPortForwards() []PortForwardInfo {
+	return globalPortForwardManager.GetAll()
+}
+
+// GetAll 获取所有转发规则（管理器内部方法）
+func (m *portForwardManager) GetAll() []PortForwardInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	result := make([]PortForwardInfo, 0, len(m.forwards))
+	for _, entry := range m.forwards {
+		info := entry.info
+		// 复制连接计数（线程安全）
+		entry.mu.Lock()
+		info.ConnCount = entry.info.ConnCount
+		entry.mu.Unlock()
+		result = append(result, info)
+	}
+	return result
+}

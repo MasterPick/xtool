@@ -148,6 +148,7 @@ import {
   Calculator, ArrowLeftRight, StickyNote,
   Signal, Radar, Globe, Globe2, Server,
   Database, FileCode, Lock, Trash2, Clipboard, KeyRound, SearchCode, Gauge,
+  AlignLeft, FileInput,
 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
 
@@ -191,6 +192,7 @@ const iconMap: Record<string, any> = {
   Calculator, ArrowLeftRight, StickyNote,
   Signal, Radar, Globe, Globe2, Server, Settings,
   Database, FileCode, Lock, Trash2, Clipboard, KeyRound, SearchCode, Gauge,
+  AlignLeft, FileInput,
 }
 const getIcon = (name: string) => iconMap[name] || FileText
 
@@ -217,6 +219,7 @@ const navGroups = [
       { path: '/devtools/dummydata', label: '占位文本生成', icon: 'Database' },
       { path: '/devtools/apidoc',    label: '接口文档生成', icon: 'FileCode' },
       { path: '/devtools/obfuscator',label: '代码混淆',    icon: 'Lock' },
+      { path: '/devtools/formatter', label: '代码格式化',  icon: 'AlignLeft' },
     ],
   },
   {
@@ -243,6 +246,7 @@ const navGroups = [
       { path: '/daily/notes',    label: '备忘录',       icon: 'StickyNote' },
       { path: '/daily/password', label: '密码生成',     icon: 'KeyRound' },
       { path: '/daily/qrbatch',  label: '二维码批量处理', icon: 'QrCode' },
+      { path: '/daily/docconverter', label: '文档转换', icon: 'FileInput' },
     ],
   },
   {
@@ -256,6 +260,7 @@ const navGroups = [
       { path: '/network/hosts',     label: 'Hosts 编辑',  icon: 'Server' },
       { path: '/network/whois',     label: 'WHOIS 查询', icon: 'SearchCode' },
       { path: '/network/speedtest', label: '网络测速',   icon: 'Gauge' },
+      { path: '/network/portforward', label: '端口转发', icon: 'ArrowLeftRight' },
     ],
   },
 ]

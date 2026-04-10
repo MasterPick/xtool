@@ -1,13 +1,5 @@
 <template>
-  <div class="page-container">
-    <!-- 标题 -->
-    <div class="mb-4">
-      <div class="page-title">
-        <FileText :size="20" class="text-primary-400" />
-        文本工具
-      </div>
-      <div class="page-desc">字符统计 · 查找替换 · 文本对比 · 行号处理</div>
-    </div>
+  <ToolPage title="文本处理" description="文本查找替换、大小写转换、去重">
 
     <!-- Tab 导航 -->
     <div class="tab-bar mb-4">
@@ -72,8 +64,8 @@
           <div class="text-xl font-bold text-blue-400">{{ statResult.bytes || 0 }} B</div>
           <div class="text-xs opacity-50">字节大小</div>
         </div>
-      </div>
-    </template>
+  </ToolPage>
+</template>
 
     <!-- 查找替换 -->
     <template v-if="tab === 'replace'">
@@ -245,6 +237,7 @@
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, watch } from 'vue'
 import { FileText, BarChart2, Replace, GitCompare, Trash2, Copy, ArrowLeftRight, Hash, MinusCircle, ArrowDownAZ } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

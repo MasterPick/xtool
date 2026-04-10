@@ -1,10 +1,8 @@
 <template>
-  <!-- 磁盘清理工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><HardDrive :size="20" class="text-primary-400"/>磁盘清理</div>
-      <div class="page-desc">扫描并清理磁盘中的临时文件和缓存</div>
-    </div>
+  <ToolPage title="磁盘清理" description="扫描清理系统垃圾文件">
+<!-- 磁盘清理工具 -->
+  
+    
 
     <!-- 扫描控制 -->
     <div class="card mb-4">
@@ -110,10 +108,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed } from 'vue'
 import { HardDrive, Search, CheckSquare, Trash2, CheckCircle, AlertTriangle } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

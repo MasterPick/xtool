@@ -1,8 +1,6 @@
 <template>
-  <div class="page-container">
-    <div class="page-title"><Link :size="20" class="text-primary-400"/>URL 编解码</div>
-    <div class="page-desc">URL 编码与解码</div>
-    <div class="tab-bar mb-4">
+  <ToolPage title="URL 编解码" description="URL 编码与解码">
+<div class="tab-bar mb-4">
       <button :class="['tab-item', mode==='encode'&&'active']" @click="mode='encode'">编码</button>
       <button :class="['tab-item', mode==='decode'&&'active']" @click="mode='decode'">解码</button>
     </div>
@@ -25,9 +23,10 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref } from 'vue'
 import { Link, Wand2, Copy } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

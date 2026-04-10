@@ -118,6 +118,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/devtools/CodeObfuscator.vue'),
     meta: { title: '代码混淆', category: 'devtools', icon: 'Lock' },
   },
+  {
+    path: '/devtools/formatter',
+    name: 'CodeFormatter',
+    component: () => import('@/views/devtools/CodeFormatter.vue'),
+    meta: { title: '代码格式化', category: 'devtools', icon: 'AlignLeft' },
+  },
 
   // ============ 系统工具 ============
   {
@@ -206,6 +212,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/daily/QRBatchTool.vue'),
     meta: { title: '二维码批量处理', category: 'daily', icon: 'QrCode' },
   },
+  {
+    path: '/daily/docconverter',
+    name: 'DocConverter',
+    component: () => import('@/views/daily/DocConverter.vue'),
+    meta: { title: '文档转换', category: 'daily', icon: 'FileInput' },
+  },
 
   // ============ 网络工具 ============
   {
@@ -249,6 +261,12 @@ const routes: RouteRecordRaw[] = [
     name: 'SpeedTest',
     component: () => import('@/views/network/SpeedTest.vue'),
     meta: { title: '网络测速', category: 'network', icon: 'Gauge' },
+  },
+  {
+    path: '/network/portforward',
+    name: 'PortForward',
+    component: () => import('@/views/network/PortForward.vue'),
+    meta: { title: '端口转发', category: 'network', icon: 'ArrowLeftRight' },
   },
 
   // ============ 设置 ============

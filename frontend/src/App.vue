@@ -259,86 +259,6 @@ onMounted(async () => {
 
 <style>
 /* ============================================================
-   CSS 变量驱动主题系统
-   ============================================================ */
-
-:root {
-  /* 过渡时长 */
-  --transition-theme: 0.3s ease;
-
-  /* 深色主题变量（默认） */
-  --bg-primary: #0f0f14;
-  --bg-secondary: #16161d;
-  --bg-tertiary: #1c1c26;
-  --bg-hover: rgba(255, 255, 255, 0.06);
-  --bg-active: rgba(99, 102, 241, 0.15);
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --border-color: rgba(255, 255, 255, 0.06);
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-bg: rgba(99, 102, 241, 0.12);
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --statusbar-bg: rgba(255, 255, 255, 0.02);
-}
-
-/* 浅色主题 */
-.light {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
-  --bg-tertiary: #e2e8f0;
-  --bg-hover: rgba(0, 0, 0, 0.05);
-  --bg-active: rgba(79, 70, 229, 0.1);
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border-color: rgba(0, 0, 0, 0.08);
-  --accent: #4f46e5;
-  --accent-hover: #6366f1;
-  --accent-bg: rgba(79, 70, 229, 0.08);
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  --statusbar-bg: rgba(0, 0, 0, 0.02);
-}
-
-/* 蓝色主题 */
-.theme-blue {
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --accent-bg: rgba(59, 130, 246, 0.12);
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #0f1525;
-  --bg-tertiary: #141c30;
-}
-
-/* 绿色主题 */
-.theme-green {
-  --accent: #22c55e;
-  --accent-hover: #4ade80;
-  --accent-bg: rgba(34, 197, 94, 0.12);
-  --bg-primary: #0a140e;
-  --bg-secondary: #0f1a13;
-  --bg-tertiary: #14201a;
-}
-
-/* 紫色主题 */
-.theme-purple {
-  --accent: #a855f7;
-  --accent-hover: #c084fc;
-  --accent-bg: rgba(168, 85, 247, 0.12);
-  --bg-primary: #120a1a;
-  --bg-secondary: #170f22;
-  --bg-tertiary: #1c1428;
-}
-
-/* 云母主题 */
-.theme-mica {
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-bg: rgba(99, 102, 241, 0.15);
-}
-
-/* ============================================================
    全局样式
    ============================================================ */
 
@@ -472,25 +392,6 @@ onMounted(async () => {
 .light .mica-effect .topbar,
 .light .mica-effect .statusbar {
   background: rgba(255, 255, 255, 0.7);
-}
-
-/* ============================================================
-   页面切换动画（淡入淡出 + 微位移）
-   ============================================================ */
-
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
 }
 
 /* ============================================================

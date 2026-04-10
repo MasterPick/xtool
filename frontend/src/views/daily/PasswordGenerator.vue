@@ -1,10 +1,8 @@
 <template>
-  <!-- 密码生成器 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><KeyRound :size="20" class="text-primary-400"/>密码生成器</div>
-      <div class="page-desc">生成安全的随机密码</div>
-    </div>
+  <ToolPage title="密码生成" description="安全随机密码生成器">
+<!-- 密码生成器 -->
+  
+    
 
     <!-- 配置区域 -->
     <div class="card mb-4">
@@ -119,10 +117,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, reactive, computed } from 'vue'
 import { KeyRound, Wand2, Copy, Trash2 } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

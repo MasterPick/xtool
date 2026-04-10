@@ -209,11 +209,11 @@ onUnmounted(() => {
   border-radius: 10px; padding: 14px 8px; font-size: 16px; cursor: pointer;
   color: var(--text-primary); transition: all 0.1s; text-align: center;
 }
-.calc-btn:hover  { background: rgba(255,255,255,0.1); }
+.calc-btn:hover  { background: var(--bg-hover); }
 .calc-btn:active { transform: scale(0.95); }
-.calc-btn-op    { color: #818cf8; font-size: 18px; }
-.calc-btn-eq    { background: #6366f1; color: #fff; }
-.calc-btn-eq:hover { background: #818cf8; }
+.calc-btn-op    { color: var(--accent-hover); font-size: 18px; }
+.calc-btn-eq    { background: var(--accent); color: var(--text-primary); }
+.calc-btn-eq:hover { background: var(--accent-hover); }
 .calc-btn-clear { background: rgba(239,68,68,0.15); color: #f87171; }
 .calc-btn-fn    { color: #94a3b8; font-size: 12px; }
 </style>

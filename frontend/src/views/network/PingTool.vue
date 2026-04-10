@@ -1,9 +1,5 @@
 <template>
-  <div class="page-container">
-    <div>
-      <div class="page-title"><Signal :size="20" class="text-primary-400"/>Ping 测试</div>
-      <div class="page-desc">测试主机连通性与网络延迟</div>
-    </div>
+  <ToolPage title="Ping 测试" description="网络连通性与延迟测试">
 
     <div class="card mb-4">
       <div class="flex gap-2">
@@ -71,10 +67,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, computed, onUnmounted } from 'vue'
 import { Signal, Trash2, Square } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'

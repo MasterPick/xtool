@@ -1,10 +1,8 @@
 <template>
-  <!-- 二维码批量处理工具 -->
-  <div class="page-container">
-    <div>
-      <div class="page-title"><QrCode :size="20" class="text-primary-400"/>二维码批量处理</div>
-      <div class="page-desc">批量生成和解析二维码</div>
-    </div>
+  <ToolPage title="二维码批量处理" description="批量生成与解析二维码">
+<!-- 二维码批量处理工具 -->
+  
+    
 
     <!-- 模式切换 -->
     <div class="tab-bar mb-4">
@@ -132,10 +130,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </ToolPage>
 </template>
 
 <script setup lang="ts">
+import ToolPage from '@/components/ToolPage.vue'
 import { ref, onMounted } from 'vue'
 import { QrCode, Plus, ScanLine, Wand2, Download, Copy, Upload } from 'lucide-vue-next'
 import { useAppStore } from '@/stores/app'
