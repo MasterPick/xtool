@@ -21,12 +21,20 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
 // Version 应用版本号（编译时通过 -ldflags 注入）
 // 构建命令示例: go build -ldflags "-X main.Version=1.0.0" .
 var Version = "dev"
+
+// BuildDate 构建日期（编译时注入）
+var BuildDate = "unknown"
+
+// GitCommit Git 提交哈希（编译时注入）
+var GitCommit = "unknown"
 
 // 嵌入前端静态资源（编译时打包）
 //
@@ -51,16 +59,6 @@ func main() {
 	// 初始化配置中心
 	cfg := config.NewConfig(database)
 
-	// 从配置中读取窗口大小和置顶设置
-	appConfig := cfg.GetConfig()
-	windowWidth := 1280
-	windowHeight := 800
-	if appConfig.FontSize > 0 {
-		// 根据字体大小适当调整窗口尺寸
-		windowWidth = 1280
-		windowHeight = 800
-	}
-
 	// 初始化各功能模块
 	devModule := devtools.NewDevTools(database)
 	sysModule := sysinfo.NewSysInfo()
@@ -68,11 +66,11 @@ func main() {
 	netModule := network.NewNetworkTools()
 	advModule := advanced.NewAdvancedTools(cfg)
 
-	// 创建 Wails 应用
-	err = wails.Run(&options.App{
+	// 构建 Wails 应用选项
+	appOptions := &options.App{
 		Title:            fmt.Sprintf("XTool v%s", Version),
-		Width:            windowWidth,
-		Height:           windowHeight,
+		Width:            1280,
+		Height:           800,
 		MinWidth:         900,
 		MinHeight:        600,
 		DisableResize:    false,
@@ -98,36 +96,39 @@ func main() {
 			cfg,
 		},
 
-		// Windows 平台特定配置（亚克力/云母效果）
-		Windows: &windows.Options{
-			WebviewIsTransparent:              true,
-			WindowIsTranslucent:               true,
-			BackdropType:                      windows.Mica, // Windows 11 云母效果
-			DisablePinchZoom:                  false,
-			DisableWindowIcon:                 false,
-			IsZoomControlEnabled:              false,
-			EnableSwipeGestures:               false,
-			DisableFramelessWindowDecorations: true, // 禁用系统标题栏装饰（避免双标题栏）
-		},
-
-		// Linux 平台特定配置
-		Linux: &options.Linux{
-			WindowIsTranslucent: true,
-			WebviewGpuPolicy:    options.WebviewGpuPolicyAlways,
-			ProgramName:         "XTool",
-		},
-
-		// macOS 平台特定配置
-		Mac: &options.Mac{
-			TitleBar:            options.TitleBarHiddenInset(),
-			About:               &options.AboutInfo{Title: "XTool"},
-			WebviewIsTransparent: true,
-			WindowIsTranslucent:  true,
-		},
-
 		// 日志级别
 		LogLevel: 2,
-	})
+	}
+
+	// Windows 平台特定配置（亚克力/云母效果）
+	appOptions.Windows = &windows.Options{
+		WebviewIsTransparent:              true,
+		WindowIsTranslucent:               true,
+		BackdropType:                      windows.Mica, // Windows 11 云母效果
+		DisablePinchZoom:                  false,
+		DisableWindowIcon:                 false,
+		IsZoomControlEnabled:              false,
+		EnableSwipeGestures:               false,
+		DisableFramelessWindowDecorations: true, // 禁用系统标题栏装饰（避免双标题栏）
+	}
+
+	// Linux 平台特定配置
+	appOptions.Linux = &linux.Options{
+		WindowIsTranslucent: true,
+		WebviewGpuPolicy:    linux.WebviewGpuPolicyAlways,
+		ProgramName:         "XTool",
+	}
+
+	// macOS 平台特定配置
+	appOptions.Mac = &mac.Options{
+		TitleBar:            mac.TitleBarHiddenInset(),
+		About:               &mac.AboutInfo{Title: "XTool"},
+		WebviewIsTransparent: true,
+		WindowIsTranslucent:  true,
+	}
+
+	// 创建并运行 Wails 应用
+	err = wails.Run(appOptions)
 
 	if err != nil {
 		logger.Error("应用运行失败: " + err.Error())
@@ -136,5 +137,6 @@ func main() {
 	}
 
 	// 打印运行时信息
-	logger.Info(fmt.Sprintf("XTool v%s 运行中 (OS: %s/%s)", Version, runtime.GOOS, runtime.GOARCH))
+	logger.Info(fmt.Sprintf("XTool v%s (build: %s, commit: %s) 运行中 (OS: %s/%s)",
+		Version, BuildDate, GitCommit, runtime.GOOS, runtime.GOARCH))
 }
