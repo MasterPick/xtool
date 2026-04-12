@@ -65,7 +65,7 @@
           <div>版本：<span class="font-mono text-primary-400">v2.0.0</span></div>
           <div>作者：<span class="text-primary-400">MasterPick</span></div>
           <div>技术栈：<span class="font-mono">Wails v2 + Go + Vue3 + TypeScript</span></div>
-          <div>开源：<a href="https://github.com/MasterPick/universal-toolbox" class="text-primary-400 underline">GitHub</a></div>
+          <div>开源：<a href="https://github.com/MasterPick/xtool" class="text-primary-400 underline">GitHub</a></div>
         </div>
       </div>
     </div>

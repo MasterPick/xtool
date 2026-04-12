@@ -110,6 +110,6 @@ func (a *AdvancedTools) GetAppVersion() map[string]string {
 		"version":   "2.0.0",
 		"buildDate": "2026-04-12",
 		"author":    "MasterPick",
-		"repo":      "https://github.com/MasterPick/universal-toolbox",
+		"repo":      "https://github.com/MasterPick/xtool",
 	}
 }

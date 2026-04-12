@@ -260,7 +260,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Maintainer: MasterPick <masterpickself@outlook.com>
-          Homepage: https://github.com/MasterPick/universal-toolbox
+          Homepage: https://github.com/MasterPick/xtool
           Description: XTool - 一站式桌面工具集
            功能丰富的跨平台桌面工具集，包含开发工具、系统工具、
            日常工具、网络工具等30+实用功能。
@@ -569,7 +569,7 @@ jobs:
             
             ### 📝 变更日志
             
-            详见 [CHANGELOG.md](https://github.com/MasterPick/universal-toolbox/blob/main/CHANGELOG.md)
+            详见 [CHANGELOG.md](https://github.com/MasterPick/xtool/blob/main/CHANGELOG.md)
           files: |
             release-files/*.exe
             release-files/*.deb

@@ -42,8 +42,8 @@ nsis:
   - id: xtool-installer
     name: XTool {{.Version}} Setup
     publisher: MasterPick
-    url: https://github.com/MasterPick/universal-toolbox
-    homepage: https://github.com/MasterPick/universal-toolbox
+    url: https://github.com/MasterPick/xtool
+    homepage: https://github.com/MasterPick/xtool
     license: LICENSE
     display_name: XTool
     install_mode: currentUser
@@ -77,7 +77,7 @@ nfpms:
   - id: linux-package
     package_name: xtool
     vendor: MasterPick
-    homepage: https://github.com/MasterPick/universal-toolbox
+    homepage: https://github.com/MasterPick/xtool
     maintainer: MasterPick <masterpickself@outlook.com>
     description: XTool - One-stop Desktop Toolbox
     license: MIT

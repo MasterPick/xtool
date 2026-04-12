@@ -39,7 +39,7 @@
 - .goreleaser.yaml 添加 .deb 包 depends 字段（libgtk-3-0, libwebkit2gtk-4.0-37）
 - .goreleaser.yaml 添加 macOS universal binary 配置
 - GitHub Actions NSIS 使用项目自定义图标（build/windows/icon.ico）
-- GitHub Actions 修复仓库 URL 不一致问题（统一为 MasterPick/universal-toolbox）
+- GitHub Actions 修复仓库 URL 不一致问题（统一为 MasterPick/xtool）
 - GitHub Actions 添加版本号自动回写（发布时自动更新 wails.json）
 - wails.json 版本号更新为 2.0.0
 

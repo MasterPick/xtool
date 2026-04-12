@@ -7,7 +7,7 @@
 !define APP_NAME "PLACEHOLDER_APP_NAME"
 !define APP_VERSION "PLACEHOLDER_VERSION"
 !define APP_PUBLISHER "MasterPick"
-!define APP_URL "https://github.com/MasterPick/universal-toolbox"
+!define APP_URL "https://github.com/MasterPick/xtool"
 !define APP_EXE "PLACEHOLDER_APP_EXE"
 !define INSTALL_DIR "PLACEHOLDER_INSTALL_DIR"
 

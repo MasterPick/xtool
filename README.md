@@ -6,7 +6,7 @@
 
 **一站式全平台桌面工具集，为开发者与高级用户赋能**
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)](https://github.com/MasterPick/universal-toolbox/releases/latest)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)](https://github.com/MasterPick/xtool/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-brightgreen?style=flat-square)]()
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat-square&logo=go)]()
@@ -125,8 +125,8 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/MasterPick/universal-toolbox.git
-cd universal-toolbox
+git clone https://github.com/MasterPick/xtool.git
+cd xtool
 
 # 2. 安装构建依赖
 make install-deps
