@@ -38,7 +38,7 @@ func NewLogger() *Logger {
 	_ = os.MkdirAll(logDir, 0755)
 
 	// 按日期创建日志文件（每天一个）
-	logFileName := fmt.Sprintf("toolbox-%s.log", time.Now().Format("2006-01-02"))
+	logFileName := fmt.Sprintf("xtool-%s.log", time.Now().Format("2006-01-02"))
 	logFilePath := filepath.Join(logDir, logFileName)
 
 	// 打开日志文件（追加模式）

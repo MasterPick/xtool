@@ -13,19 +13,19 @@
 GitHub Actions 构建时自动生成 .deb 包，目录结构如下：
 
 ```
-universal-toolbox_VERSION_amd64/
+xtool_VERSION_amd64/
 ├── DEBIAN/
 │   ├── control       # 包元信息
 │   ├── postinst      # 安装后脚本
 │   └── prerm         # 卸载前脚本
 └── usr/
     ├── bin/
-    │   └── universal-toolbox    # 主程序
+    │   └── xtool    # 主程序
     └── share/
         ├── applications/
-        │   └── universal-toolbox.desktop   # 应用菜单图标
+        │   └── xtool.desktop   # 应用菜单图标
         └── doc/
-            └── universal-toolbox/
+            └── xtool/
                 ├── README.md
                 └── LICENSE
 ```
@@ -34,14 +34,14 @@ universal-toolbox_VERSION_amd64/
 
 ```bash
 # DEB 包安装（Ubuntu/Debian）
-sudo dpkg -i universal-toolbox_*_amd64.deb
+sudo dpkg -i xtool_*_amd64.deb
 
 # 或使用 apt（自动处理依赖）
-sudo apt install ./universal-toolbox_*_amd64.deb
+sudo apt install ./xtool_*_amd64.deb
 
 # tar.gz 通用安装
-tar -xzf universal-toolbox_linux_amd64.tar.gz
-./universal-toolbox
+tar -xzf xtool_linux_amd64.tar.gz
+./xtool
 ```
 
 ## 系统依赖

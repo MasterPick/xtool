@@ -125,7 +125,7 @@
       <!-- 版本号 + 版权信息 -->
       <div v-if="!collapsed" class="px-2 pt-2 pb-1">
         <div class="text-[10px] opacity-30 leading-relaxed">
-          <div>Universal Toolbox</div>
+          <div>XTool</div>
           <div>v2.0.0</div>
           <div class="mt-0.5">&copy; 2024 All rights reserved</div>
         </div>

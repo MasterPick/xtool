@@ -32,7 +32,7 @@ func Init() (*Database, error) {
 	}
 
 	// 打开 SQLite 数据库（WAL 模式支持并发读）
-	dbPath := filepath.Join(dataDir, "toolbox.db")
+	dbPath := filepath.Join(dataDir, "xtool.db")
 	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000")
 	if err != nil {
 		return nil, err

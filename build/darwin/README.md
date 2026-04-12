@@ -14,8 +14,8 @@ GitHub Actions 构建时自动创建 .dmg 文件：
 
 | 文件名 | 适用架构 |
 |--------|----------|
-| `universal-toolbox_macos_amd64.dmg` | Intel Mac |
-| `universal-toolbox_macos_arm64.dmg` | Apple Silicon (M1/M2/M3) |
+| `xtool_macos_amd64.dmg` | Intel Mac |
+| `xtool_macos_arm64.dmg` | Apple Silicon (M1/M2/M3) |
 
 ## 安装方式
 
@@ -49,5 +49,5 @@ wails build -platform darwin/arm64
 hdiutil create -volname "万能工具箱" \
   -srcfolder "build/bin/万能工具箱.app" \
   -ov -format UDZO \
-  "build/bin/universal-toolbox_macos.dmg"
+  "build/bin/xtool_macos.dmg"
 ```

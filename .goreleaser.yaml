@@ -140,7 +140,7 @@ snapshot:
 release:
   github:
     owner: MasterPick
-    name: universal-toolbox
+    name: xtool
   draft: false
   prerelease: auto
   name_template: "v{{.Version}}"
